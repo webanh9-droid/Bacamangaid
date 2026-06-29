@@ -32,6 +32,26 @@
             android:id="@+id/mangaSpinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Atau buat manga baru:"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginBottom="6dp" />
+
+        <EditText
+            android:id="@+id/newMangaTitleInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Judul manga baru (kosongkan kalau pilih dari atas)"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#888888"
+            android:background="#222222"
+            android:padding="10dp"
+            android:inputType="text"
             android:layout_marginBottom="20dp" />
 
         <!-- ===== SINOPSIS & GENRE ===== -->
@@ -55,11 +75,36 @@
             android:padding="10dp"
             android:inputType="textMultiLine" />
 
-        <Spinner
-            android:id="@+id/genreSpinner"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" />
+            android:text="Genre (bisa pilih lebih dari satu)"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:id="@+id/genreCheckboxContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#222222"
+            android:padding="10dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Status"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="6dp" />
+
+        <Spinner
+            android:id="@+id/statusSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <Button
             android:id="@+id/btnSaveMeta"

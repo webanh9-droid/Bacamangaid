@@ -4,7 +4,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -15,6 +17,7 @@ class AdminActivity : AppCompatActivity() {
 
     private var mangaTitles: List<String> = emptyList()
     private var genres: List<GenreItem> = emptyList()
+    private var statuses: List<StatusItem> = emptyList()
 
     private var selectedPdfUri: Uri? = null
     private var selectedCoverUri: Uri? = null
@@ -46,7 +49,6 @@ class AdminActivity : AppCompatActivity() {
             return
         }
 
-        // Cek status admin dulu sebelum tampilin apa pun
         Thread {
             val isAdmin = try {
                 AdminApi.isAdmin(token, userId)
@@ -65,59 +67,116 @@ class AdminActivity : AppCompatActivity() {
         }.start()
     }
 
+    /** Ambil judul manga yang dipakai: prioritaskan input judul baru kalau diisi, kalau kosong pakai pilihan spinner. */
+    private fun getActiveTitle(newTitleInput: EditText, mangaSpinner: Spinner): String? {
+        val newTitle = newTitleInput.text.toString().trim()
+        if (newTitle.isNotEmpty()) return newTitle
+        if (mangaTitles.isEmpty()) return null
+        return mangaTitles.getOrNull(mangaSpinner.selectedItemPosition)
+    }
+
+    /** Bikin 1 CheckBox per genre di dalam container, masing-masing pakai genre.id sebagai tag. */
+    private fun populateGenreCheckboxes(container: LinearLayout, genreList: List<GenreItem>) {
+        container.removeAllViews()
+        for (genre in genreList) {
+            val checkBox = CheckBox(this)
+            checkBox.text = genre.name
+            checkBox.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
+            checkBox.tag = genre.id
+            container.addView(checkBox)
+        }
+    }
+
+    /** Baca semua CheckBox yang sedang dicentang di container, kembalikan list genre id-nya. */
+    private fun getSelectedGenreIds(container: LinearLayout): List<Long> {
+        val selected = mutableListOf<Long>()
+        for (i in 0 until container.childCount) {
+            val child = container.getChildAt(i)
+            if (child is CheckBox && child.isChecked) {
+                (child.tag as? Long)?.let { selected.add(it) }
+            }
+        }
+        return selected
+    }
+
     private fun setupAdminUi(token: String) {
         val mangaSpinner = findViewById<Spinner>(R.id.mangaSpinner)
-        val genreSpinner = findViewById<Spinner>(R.id.genreSpinner)
+        val newTitleInput = findViewById<EditText>(R.id.newMangaTitleInput)
+        val genreCheckboxContainer = findViewById<LinearLayout>(R.id.genreCheckboxContainer)
+        val statusSpinner = findViewById<Spinner>(R.id.statusSpinner)
         val synopsisInput = findViewById<EditText>(R.id.synopsisInput)
         val chapterNumberInput = findViewById<EditText>(R.id.chapterNumberInput)
         val newAdminEmailInput = findViewById<EditText>(R.id.newAdminEmailInput)
 
-        // Load daftar manga (dari GitHub) + genre (dari Supabase)
         Thread {
             try {
                 mangaTitles = GitHubApi.listMangaTitles()
                 genres = try { SupabaseApi.fetchGenres() } catch (e: Exception) { emptyList() }
+                statuses = try { SupabaseApi.fetchStatuses() } catch (e: Exception) { emptyList() }
 
                 runOnUiThread {
                     mangaSpinner.adapter = ArrayAdapter(
                         this, android.R.layout.simple_spinner_dropdown_item, mangaTitles
                     )
 
-                    val genreNames = genres.map { it.name }
-                    genreSpinner.adapter = ArrayAdapter(
-                        this, android.R.layout.simple_spinner_dropdown_item, genreNames
+                    populateGenreCheckboxes(genreCheckboxContainer, genres)
+
+                    val statusNames = statuses.map { it.name }
+                    statusSpinner.adapter = ArrayAdapter(
+                        this, android.R.layout.simple_spinner_dropdown_item, statusNames
                     )
 
-                    if (mangaTitles.isNotEmpty()) {
+                    if (mangaTitles.isEmpty()) {
+                        Toast.makeText(
+                            this,
+                            "Belum ada manga di repo. Isi 'judul manga baru' di bawah buat mulai upload chapter pertama.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        chapterNumberInput.setText("1")
+                    } else {
                         suggestNextChapterNumber(mangaTitles[0], chapterNumberInput)
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this, "Gagal memuat daftar manga/genre", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Gagal memuat daftar manga/genre: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
 
         mangaSpinner.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: android.widget.AdapterView<*>?, v: android.view.View?, pos: Int, id: Long) {
-                if (mangaTitles.isNotEmpty()) {
+                if (mangaTitles.isNotEmpty() && newTitleInput.text.toString().isBlank()) {
                     suggestNextChapterNumber(mangaTitles[pos], chapterNumberInput)
                 }
             }
             override fun onNothingSelected(p: android.widget.AdapterView<*>?) {}
         })
 
+        newTitleInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {
+                if (!s.isNullOrBlank()) {
+                    chapterNumberInput.setText("1") // manga baru, mulai dari chapter 1
+                }
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
         findViewById<Button>(R.id.btnSaveMeta).setOnClickListener {
-            if (mangaTitles.isEmpty()) return@setOnClickListener
-            val title = mangaTitles[mangaSpinner.selectedItemPosition]
+            val title = getActiveTitle(newTitleInput, mangaSpinner)
+            if (title == null) {
+                Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val synopsis = synopsisInput.text.toString()
-            val genreId = genres.getOrNull(genreSpinner.selectedItemPosition)?.id
+            val genreIds = getSelectedGenreIds(genreCheckboxContainer)
+            val statusId = statuses.getOrNull(statusSpinner.selectedItemPosition)?.id
 
             Thread {
                 try {
-                    AdminApi.upsertMangaMeta(token, title, synopsis, genreId)
-                    runOnUiThread { Toast.makeText(this, "Sinopsis & genre disimpan", Toast.LENGTH_SHORT).show() }
+                    AdminApi.upsertMangaMeta(token, title, synopsis, statusId, genreIds)
+                    runOnUiThread { Toast.makeText(this, "Sinopsis, status & genre disimpan untuk \"$title\"", Toast.LENGTH_SHORT).show() }
                 } catch (e: Exception) {
                     runOnUiThread { Toast.makeText(this, e.message ?: "Gagal menyimpan", Toast.LENGTH_LONG).show() }
                 }
@@ -134,14 +193,18 @@ class AdminActivity : AppCompatActivity() {
                 Toast.makeText(this, "Pilih file PDF dulu", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (mangaTitles.isEmpty()) return@setOnClickListener
-
-            val title = mangaTitles[mangaSpinner.selectedItemPosition]
+            val title = getActiveTitle(newTitleInput, mangaSpinner)
+            if (title == null) {
+                Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val chapterNum = chapterNumberInput.text.toString().toIntOrNull()
             if (chapterNum == null) {
                 Toast.makeText(this, "Isi nomor chapter dulu", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
+            Toast.makeText(this, "Mengupload chapter $chapterNum untuk \"$title\"...", Toast.LENGTH_SHORT).show()
 
             Thread {
                 try {
@@ -150,12 +213,13 @@ class AdminActivity : AppCompatActivity() {
                     val fileName = "$title Chapter $chapterNum.pdf"
                     GitHubWriteApi.uploadFile(fileName, bytes, "Upload $fileName lewat admin panel")
                     runOnUiThread {
-                        Toast.makeText(this, "Chapter $chapterNum berhasil di-upload!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Chapter $chapterNum \"$title\" berhasil di-upload!", Toast.LENGTH_LONG).show()
                         findViewById<TextView>(R.id.selectedPdfName).text = "Belum ada file dipilih"
                         selectedPdfUri = null
+                        newTitleInput.setText("")
                     }
                 } catch (e: Exception) {
-                    runOnUiThread { Toast.makeText(this, e.message ?: "Upload gagal", Toast.LENGTH_LONG).show() }
+                    runOnUiThread { Toast.makeText(this, "Upload gagal: ${e.message}", Toast.LENGTH_LONG).show() }
                 }
             }.start()
         }
@@ -170,9 +234,13 @@ class AdminActivity : AppCompatActivity() {
                 Toast.makeText(this, "Pilih gambar cover dulu", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (mangaTitles.isEmpty()) return@setOnClickListener
+            val title = getActiveTitle(newTitleInput, mangaSpinner)
+            if (title == null) {
+                Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            val title = mangaTitles[mangaSpinner.selectedItemPosition]
+            Toast.makeText(this, "Mengupload cover untuk \"$title\"...", Toast.LENGTH_SHORT).show()
 
             Thread {
                 try {
@@ -183,12 +251,12 @@ class AdminActivity : AppCompatActivity() {
                     val fileName = "$title Cover.$ext"
                     GitHubWriteApi.uploadFile(fileName, bytes, "Upload cover $title lewat admin panel")
                     runOnUiThread {
-                        Toast.makeText(this, "Cover berhasil di-upload!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Cover \"$title\" berhasil di-upload!", Toast.LENGTH_LONG).show()
                         findViewById<TextView>(R.id.selectedCoverName).text = "Belum ada gambar dipilih"
                         selectedCoverUri = null
                     }
                 } catch (e: Exception) {
-                    runOnUiThread { Toast.makeText(this, e.message ?: "Upload gagal", Toast.LENGTH_LONG).show() }
+                    runOnUiThread { Toast.makeText(this, "Upload gagal: ${e.message}", Toast.LENGTH_LONG).show() }
                 }
             }.start()
         }

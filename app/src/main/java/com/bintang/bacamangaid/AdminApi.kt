@@ -18,9 +18,78 @@ object AdminApi {
         return arr.length() > 0
     }
 
-    /** Simpan / update sinopsis + genre untuk 1 judul manga (upsert by title). */
-    fun upsertMangaMeta(accessToken: String, title: String, synopsis: String, genreId: Long?) {
+    /**
+     * Simpan / update sinopsis + status + genre (many-to-many) untuk 1 judul manga (upsert by title).
+     * genreIds bisa lebih dari satu sekarang karena genre disimpan di tabel relasi manga_genres,
+     * bukan kolom genre_id di tabel manga lagi.
+     */
+    fun upsertMangaMeta(accessToken: String, title: String, synopsis: String, statusId: Long?, genreIds: List<Long>) {
+        // 1) Upsert baris manga (tanpa genre_id, karena kolom itu udah nggak dipakai)
+        val mangaId = upsertManga(accessToken, title, synopsis, statusId)
+
+        // 2) Sinkronkan manga_genres: hapus relasi lama, lalu insert yang baru sesuai pilihan checkbox
+        deleteMangaGenres(accessToken, mangaId)
+        if (genreIds.isNotEmpty()) {
+            insertMangaGenres(accessToken, mangaId, genreIds)
+        }
+    }
+
+    /** Upsert baris manga by title, kembalikan id-nya (dipakai buat relasi manga_genres). */
+    private fun upsertManga(accessToken: String, title: String, synopsis: String, statusId: Long?): Long {
         val url = URL("$SUPABASE_URL/rest/v1/manga?on_conflict=title")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.setRequestProperty("apikey", SUPABASE_ANON_KEY)
+        connection.setRequestProperty("Authorization", "Bearer $accessToken")
+        connection.setRequestProperty("Content-Type", "application/json")
+        // return=representation supaya kita dapat id manga-nya balik dari response
+        connection.setRequestProperty("Prefer", "resolution=merge-duplicates,return=representation")
+        connection.doOutput = true
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+
+        val body = JSONObject()
+        body.put("title", title)
+        body.put("synopsis", synopsis)
+        if (statusId != null) body.put("status_id", statusId) else body.put("status_id", JSONObject.NULL)
+
+        connection.outputStream.use { it.write(body.toString().toByteArray()) }
+
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+            val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            throw Exception("Gagal simpan data manga ($responseCode): $errorBody")
+        }
+
+        val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
+        connection.disconnect()
+
+        val arr = JSONArray(responseBody)
+        if (arr.length() == 0) throw Exception("Manga \"$title\" tersimpan tapi id tidak didapat dari server")
+        return arr.getJSONObject(0).getLong("id")
+    }
+
+    /** Hapus semua relasi genre lama untuk manga ini (biar bisa di-replace dengan pilihan checkbox terbaru). */
+    private fun deleteMangaGenres(accessToken: String, mangaId: Long) {
+        val url = URL("$SUPABASE_URL/rest/v1/manga_genres?manga_id=eq.$mangaId")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "DELETE"
+        connection.setRequestProperty("apikey", SUPABASE_ANON_KEY)
+        connection.setRequestProperty("Authorization", "Bearer $accessToken")
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+            val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            throw Exception("Gagal hapus genre lama ($responseCode): $errorBody")
+        }
+        connection.disconnect()
+    }
+
+    /** Insert baris baru ke manga_genres untuk tiap genre yang dicentang. */
+    private fun insertMangaGenres(accessToken: String, mangaId: Long, genreIds: List<Long>) {
+        val url = URL("$SUPABASE_URL/rest/v1/manga_genres")
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.setRequestProperty("apikey", SUPABASE_ANON_KEY)
@@ -31,17 +100,20 @@ object AdminApi {
         connection.connectTimeout = 10000
         connection.readTimeout = 10000
 
-        val body = JSONObject()
-        body.put("title", title)
-        body.put("synopsis", synopsis)
-        if (genreId != null) body.put("genre_id", genreId)
+        val bodyArray = JSONArray()
+        for (genreId in genreIds) {
+            val row = JSONObject()
+            row.put("manga_id", mangaId)
+            row.put("genre_id", genreId)
+            bodyArray.put(row)
+        }
 
-        connection.outputStream.use { it.write(body.toString().toByteArray()) }
+        connection.outputStream.use { it.write(bodyArray.toString().toByteArray()) }
 
         val responseCode = connection.responseCode
         if (responseCode !in 200..299) {
             val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-            throw Exception("Gagal simpan data manga ($responseCode): $errorBody")
+            throw Exception("Gagal simpan genre ($responseCode): $errorBody")
         }
         connection.disconnect()
     }

@@ -52,8 +52,9 @@ class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
                     title = mangaTitle,
                     coverUrl = coverUrl ?: meta?.coverUrlOverride,
                     synopsis = meta?.synopsis,
-                    genreId = meta?.genreId,
-                    genreName = meta?.genreName
+                    genres = meta?.genres ?: emptyList(),
+                    statusId = meta?.statusId,
+                    statusName = meta?.statusName
                 )
 
                 Handler(Looper.getMainLooper()).post {
@@ -69,7 +70,7 @@ class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
                             if (token != null && userId != null) {
                                 Thread {
                                     try {
-                                        SupabaseApi.recordRead(token, userId, mangaTitle, meta?.genreId)
+                                        SupabaseApi.recordRead(token, userId, mangaTitle)
                                     } catch (e: Exception) { }
                                 }.start()
                             }

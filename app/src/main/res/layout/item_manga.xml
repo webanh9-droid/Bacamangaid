@@ -4,17 +4,22 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="12dp"
-    android:background="?attr/selectableItemBackground">
+    android:padding="10dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="6dp"
+    android:background="@drawable/bg_manga_card">
 
+    <!-- Cover image -->
     <ImageView
         android:id="@+id/mangaCover"
-        android:layout_width="60dp"
-        android:layout_height="80dp"
+        android:layout_width="54dp"
+        android:layout_height="76dp"
         android:scaleType="centerCrop"
-        android:background="#333333"
+        android:background="@color/bg_card2"
         android:contentDescription="cover" />
 
+    <!-- Info -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -26,31 +31,58 @@
             android:id="@+id/mangaName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end" />
 
-        <TextView
-            android:id="@+id/mangaGenre"
+        <!-- Tags row: genre + status -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="#4DB8FF"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:textColor="#000000"
-            android:textSize="11sp"
-            android:visibility="gone" />
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/mangaGenre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:background="@drawable/bg_tag_genre"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/mangaStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:background="@drawable/bg_tag_status"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
+    <!-- Arrow -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:text="›"
-        android:textColor="#888888"
-        android:textSize="20sp" />
+        android:textColor="@color/text_dim"
+        android:textSize="22sp" />
 
 </LinearLayout>

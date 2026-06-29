@@ -1,5 +1,24 @@
 <resources>
-    <color name="bg_dark">#111111</color>
-    <color name="accent">#4DB8FF</color>
+    <!-- Night sky palette -->
+    <color name="bg_deep">#070B18</color>
+    <color name="bg_dark">#0D1426</color>
+    <color name="bg_card">#131B35</color>
+    <color name="bg_card2">#1A2444</color>
+    <color name="accent_blue">#4D9FFF</color>
+    <color name="accent_cyan">#00E5FF</color>
+    <color name="accent_purple">#8B5CF6</color>
+    <color name="accent_orange">#FF8C42</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#A0B4D0</color>
+    <color name="text_dim">#546480</color>
+    <color name="chip_selected">#4D9FFF</color>
+    <color name="chip_unselected">#1A2444</color>
+    <color name="status_ongoing">#22C55E</color>
+    <color name="status_completed">#4D9FFF</color>
+    <color name="status_hiatus">#F59E0B</color>
+    <color name="status_dropped">#EF4444</color>
+    <color name="divider">#1E2D50</color>
+    <!-- Legacy alias -->
+    <color name="accent">#4D9FFF</color>
     <color name="white">#FFFFFF</color>
 </resources>
