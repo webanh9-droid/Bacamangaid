@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NontonAnime</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: white;
+    }
+
+    .light-mode {
+      background-color: white;
+      color: #111;
+    }
+
+    .hamburger {
+      font-size: 30px;
+      cursor: pointer;
+      padding: 15px;
+      color: white;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+    }
+
+    .sidebar {
+      height: 100%;
+      width: 250px;
+      position: fixed;
+      top: 0;
+      left: -250px;
+      background-color: rgba(0, 0, 0, 0.9);
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      z-index: 1000;
+    }
+
+    .sidebar a {
+      padding: 12px 24px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #444;
+    }
+
+    .overlay {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    header {
+      background-color: #222;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #4db8ff;
+    }
+
+    .search-container {
+      text-align: center;
+      padding: 10px;
+      background-color: #1a1a1a;
+    }
+
+    .search-container input[type="text"] {
+      padding: 8px;
+      width: 80%;
+      font-size: 16px;
+    }
+
+    .anime-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .anime {
+      background-color: #222;
+      margin: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      width: 200px;
+    }
+
+    .anime img {
+      width: 100%;
+    }
+
+    .anime-title {
+      padding: 10px;
+      font-size: 18px;
+      text-align: center;
+      background-color: #333;
+    }
+
+    .chapter-link {
+      display: block;
+      padding: 10px;
+      text-align: center;
+      background-color: #444;
+      border-top: 1px solid #555;
+      text-decoration: none;
+      color: #4db8ff;
+    }
+
+    .chapter-link:hover {
+      background-color: #555;
+    }
+
+    .toggle-mode {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1002;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-mode" onclick="toggleMode()">🌓 Mode</button>
+  <div class="hamburger" onclick="toggleSidebar()">☰</div>
+
+  <div class="sidebar" id="sidebar">
+    <a href="genreanime.html">Genre Anime</a>
+    <a href="statusanime.html">Status Anime</a>
+    <a href="indexanime.html">Menu Anime</a>
+    <a href="index.html">Menu Manga</a>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <header>NontonAnime</header>
+  <div class="search-container">
+    <input type="text" id="searchInput" onkeyup="searchAnime()" placeholder="Cari anime...">
+  </div>
+  <div class="anime-list">
+    <div class="anime">
+      <img src="gambar 1.png" alt="Cover Komik 1">
+      <div class="anime-title">kaoru hana</div>
+      <a href="kaoruhanalist.html" class="chapter-link">&gt; Daftar</a>
+      <a href="kaoruhanaeps4.html" class="chapter-link">&gt; Episode 4</a>
+    </div>
+    <div class="anime">
+      <img src="gambar2.png" alt="Cover Komik 2">
+      <div class="anime-title">Nama Komik 2</div>
+      <a href="chapter1.html" class="chapter-link">&gt; Episode 1</a>
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("overlay");
+
+      if (sidebar.style.left === "0px") {
+        sidebar.style.left = "-250px";
+        overlay.style.display = "none";
+      } else {
+        sidebar.style.left = "0px";
+        overlay.style.display = "block";
+      }
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("light-mode");
+    }
+
+    function searchAnime() {
+      let input = document.getElementById('searchInput').value.toLowerCase();
+      let animes = document.getElementsByClassName('anime');
+      for (let i = 0; i < animes.length; i++) {
+        let title = animes[i].getElementsByClassName('anime-title')[0].innerText.toLowerCase();
+        animes[i].style.display = title.includes(input) ? "block" : "none";
+      }
+    }
+  </script>
+</body>
+</html>

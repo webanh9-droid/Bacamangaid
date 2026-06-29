@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Status: Ongoing</title>
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    .manga-card {
+      background-color: #222;
+      padding: 15px;
+      margin: 15px auto;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 10px;
+    }
+    .komik {
+      margin-top: 20px;
+    }
+    .komik img {
+      width: 300px;
+      border-radius: 8px;
+    }
+    .komik-title {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+    .chapter-link {
+      display: block;
+      margin: 5px 0;
+      color: #80c0ff;
+      text-decoration: none;
+    }
+    .chapter-link:hover {
+      text-decoration: underline;
+    }
+    .search-container input {
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+
+    .toggle-mode {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1002;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      color: #fff;
+      background: #000 url('background.jpg') no-repeat center center;
+      background-size: cover;
+    }
+
+    .hamburger {
+      font-size: 30px;
+      cursor: pointer;
+      padding: 15px;
+      color: white;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+    }
+
+    .sidebar {
+      height: 100%;
+      width: 250px;
+      position: fixed;
+      top: 0;
+      left: -250px;
+      background-color: rgba(0, 0, 0, 0.95);
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      z-index: 1000;
+    }
+
+    .sidebar a {
+      padding: 12px 24px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #444;
+    }
+
+    .overlay-sidebar {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+  </style>
+  <script>
+    function toggleMode() {
+      const body = document.body;
+      if (body.style.backgroundColor === 'white') {
+        body.style.backgroundColor = '#111';
+        body.style.color = 'white';
+      } else {
+        body.style.backgroundColor = 'white';
+        body.style.color = '#111';
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("overlaySidebar");
+      if (sidebar.style.left === "0px") {
+        sidebar.style.left = "-250px";
+        overlay.style.display = "none";
+      } else {
+        sidebar.style.left = "0px";
+        overlay.style.display = "block";
+      }
+    }
+
+    function searchKomik() {
+      var input = document.getElementById("searchInput").value.toLowerCase();
+      var komikList = document.getElementsByClassName("komik");
+
+      for (var i = 0; i < komikList.length; i++) {
+        var title = komikList[i].getElementsByClassName("komik-title")[0].innerText.toLowerCase();
+        if (title.includes(input)) {
+          komikList[i].style.display = "";
+        } else {
+          komikList[i].style.display = "none";
+        }
+      }
+    }
+  </script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8040591263995189"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+  <button class="toggle-mode" onclick="toggleMode()">🌓 Mode</button>
+  <div class="hamburger" onclick="toggleSidebar()">☰</div>
+
+  <div class="sidebar" id="sidebar">
+    <a href="genre.html">Genre</a>
+    <a href="status.html">Status</a>
+    <a href="index.html">Menu</a>
+    <a href="indexanime.html">Menu Anime</a>
+  </div>
+
+  <h1 style="color: #b0e0e6;">Status: Ongoing</h1>
+
+  <div class="manga-card">
+    <header><strong>DAFTAR MANGA</strong></header>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" onkeyup="searchKomik()" placeholder="Cari manga...">
+    </div>
+
+    <div class="komik-list">
+      <div class="komik">
+        <img src="gambar1.png" alt="Cover Komik 1">
+        <div class="komik-title">Cultural Exchange with a Game Centre Girl</div>
+        <a href="index-komik.html" class="chapter-link">> Daftar</a>
+        <a href="bab1.html" class="chapter-link">> Chapter 1</a>
+      </div>
+
+      <div class="komik">
+        <img src="gambar5.png" alt="Cover Komik 2">
+        <div class="komik-title">Nama Komik 2</div>
+        <a href="chapter1.html" class="chapter-link">> Chapter 1</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daftar Chapter - BACA MANGA</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8040591263995189" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="style2.css" />
+
+  <style>  .toggle-mode {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: #444;
+    color: black;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1002; 
+    </style>
+    
+  <style>
+    
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      color: #fff;
+      background: #000 url('background.jpg') no-repeat center center;
+      background-size: cover;
+    }
+ 
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.8);
+      min-height: 100vh;
+    }
+
+    .cover {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+    }
+
+    .cover img {
+      width: auto;
+      max-width: 90%;
+      height: auto;
+      max-height: 400px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+ 
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .chapter-list {
+      max-height: 600px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #111;
+      border-radius: 8px;
+    }
+ 
+    .chapter-list a {
+      display: block;
+      padding: 10px;
+      margin: 5px 0;
+      color: #00f2ff;
+      background: #222;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.2s;
+    }
+
+    .chapter-list a:hover {
+      background: #333;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: none;
+      background: #222;
+      color: white;
+    }
+
+    /* Hamburger Menu */
+    .hamburger {
+      font-size: 30px;
+      cursor: pointer;
+      padding: 15px;
+      color: white;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+    }
+
+    /* Sidebar */
+   
+    .sidebar {
+      height: 100%;
+      width: 250px;
+      position: fixed;
+      top: 0;
+      left: -250px;
+      background-color: rgba(0, 0, 0, 0.95);
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      z-index: 1000;
+    }
+
+    .sidebar a {
+      padding: 12px 24px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #444;
+    }
+
+    .overlay-sidebar {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+  </style>
+</head>
+<script>
+  
+  function toggleMode() {
+    document.body.classList.toggle("light-mode");}
+  </script>
+<body>
+
+  <!-- Hamburger -->
+  <div class="hamburger" onclick="toggleSidebar()">☰</div>
+
+  <!-- Sidebar -->
+  
+  <div class="sidebar" id="sidebar">
+    
+<button class="toggle-mode" onclick="toggleMode()">🌓 Mode</button>
+    <a href="genre.html">Genre</a>
+    <a href="status.html">Status</a>
+    <a href="index.html">Menu</a>
+    <a href="indexanime.html">Menu Anime</a>
+  </div>
+
+  <!-- Overlay untuk sidebar -->
+  <div class="overlay-sidebar" id="overlaySidebar" onclick="toggleSidebar()"></div>
+
+  <!-- Konten utama -->
+  <div class="overlay">
+    <div class="cover">
+      <img src="gambar 1.png" alt="Cover Manga">
+    </div>
+    <div class="content">
+      <h1>DAFTAR CHAPTER</h1>
+      <div class="chapter-list">
+
+        <input type="text" id="searchInput" placeholder="Cari Chapter (misal: 12)" onkeydown="if(event.key==='Enter')searchManga()">
+
+        <p><a href="genre.html">📚 Lihat Berdasarkan Genre</a></p>
+        <div class="genre">Genre: Romance, Comedy, Slice of Life</div>
+
+        <!-- Chapter Link (dipotong untuk ringkas, tambahkan yang kamu butuh) -->
+        <a href="bab1.html">Chapter 1</a>
+<a href="bab2.html">Chapter 2</a>
+<a href="bab3.html">Chapter 3</a>
+<a href="bab4.html">Chapter 4</a>
+<a href="bab5.html">Chapter 5</a>
+<a href="bab6.html">Chapter 6</a>
+<a href="bab7.html">Chapter 7</a>
+<a href="bab8.html">Chapter 8</a>
+<a href="bab9.html">Chapter 9</a>
+<a href="bab10.html">Chapter 10</a>
+<a href="bab11.html">Chapter 11</a>
+<a href="bab12.html">Chapter 12</a>
+<a href="bab13.html">Chapter 13</a>
+<a href="bab14.html">Chapter 14</a>
+<a href="bab15.html">Chapter 15</a>
+<a href="bab16.html">Chapter 16</a>
+<a href="bab17.html">Chapter 17</a>
+<a href="bab18.html">Chapter 18</a>
+<a href="bab19.html">Chapter 19</a>
+<a href="bab20.html">Chapter 20</a>
+<a href="bab21.html">Chapter 21</a>
+<a href="bab22.html">Chapter 22</a>
+<a href="bab23.html">Chapter 23</a>
+<a href="bab24.html">Chapter 24</a>
+<a href="bab25.html">Chapter 25</a>
+<a href="bab26.html">Chapter 26</a>
+<a href="bab27.html">Chapter 27</a>
+<a href="bab28.html">Chapter 28</a>
+<a href="bab29.html">Chapter 29</a>
+<a href="bab30.html">Chapter 30</a>
+<a href="bab31.html">Chapter 31</a>
+<a href="bab32.html">Chapter 32</a>
+<a href="bab33.html">Chapter 33</a>
+<a href="bab34.html">Chapter 34</a>
+<a href="bab35.html">Chapter 35</a>
+<a href="bab36.html">Chapter 36</a>
+<a href="bab37.html">Chapter 37</a>
+<a href="bab38.html">Chapter 38</a>
+<a href="bab39.html">Chapter 39</a>
+<a href="bab40.html">Chapter 40</a>
+<a href="bab41.html">Chapter 41</a>
+<a href="bab42.html">Chapter 42</a>
+<a href="bab43.html">Chapter 43</a>
+<a href="bab44.html">Chapter 44</a>
+<a href="bab45.html">Chapter 45</a>
+<a href="bab46.html">Chapter 46</a>
+<a href="bab47.html">Chapter 47</a>
+<a href="bab48.html">Chapter 48</a>
+<a href="bab49.html">Chapter 49</a>
+<a href="bab50.html">Chapter 50</a>
+<a href="bab51.html">Chapter 51</a>
+<a href="bab52.html">Chapter 52</a>
+<a href="bab53.html">Chapter 53</a>
+<a href="bab54.html">Chapter 54</a>
+<a href="bab55.html">Chapter 55</a>
+<a href="bab56.html">Chapter 56</a>
+<a href="bab57.html">Chapter 57</a>
+<a href="bab58.html">Chapter 58</a>
+<a href="bab59.html">Chapter 59</a>
+<a href="bab60.html">Chapter 60</a>
+<a href="bab61.html">Chapter 61</a>
+<a href="bab62.html">Chapter 62</a>
+<a href="bab63.html">Chapter 63</a>
+<a href="bab64.html">Chapter 64</a>
+<a href="bab65.html">Chapter 65</a>
+<a href="bab66.html">Chapter 66</a>
+<a href="bab67.html">Chapter 67</a>
+<a href="bab68.html">Chapter 68</a>
+<a href="bab69.html">Chapter 69</a>
+<a href="bab70.html">Chapter 70</a>
+<a href="bab71.html">Chapter 71</a>
+<a href="bab72.html">Chapter 72</a>
+<a href="bab73.html">Chapter 73</a>
+<a href="bab74.html">Chapter 74</a>
+<a href="bab75.html">Chapter 75</a>
+<a href="bab76.html">Chapter 76</a>
+<a href="bab77.html">Chapter 77</a>
+<a href="bab78.html">Chapter 78</a>
+<a href="bab79.html">Chapter 79</a>
+<a href="bab80.html">Chapter 80</a>
+<a href="bab81.html">Chapter 81</a>
+<a href="bab82.html">Chapter 82</a>
+<a href="bab83.html">Chapter 83</a>
+<a href="bab84.html">Chapter 84</a>
+<a href="bab85.html">Chapter 85</a>
+<a href="bab86.html">Chapter 86</a>
+<a href="bab87.html">Chapter 87</a>
+<a href="bab88.html">Chapter 88</a>
+<a href="bab89.html">Chapter 89</a>
+<a href="bab90.html">Chapter 90</a>
+<a href="bab91.html">Chapter 91</a>
+<a href="bab92.html">Chapter 92</a>
+<a href="bab93.html">Chapter 93</a>
+<a href="bab94.html">Chapter 94</a>
+<a href="bab95.html">Chapter 95</a>
+<a href="bab96.html">Chapter 96</a>
+<a href="bab97.html">Chapter 97</a>
+<a href="bab98.html">Chapter 98</a>
+<a href="bab99.html">Chapter 99</a>
+<a href="bab100.html">Chapter 100</a>
+        <!-- Tambahkan bab berikutnya sesuai kebutuhan -->
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function searchManga() {
+      var input = document.getElementById("searchInput").value.toLowerCase();
+      if (!input) return;
+      var chapter = parseInt(input.replace(/[^\d]/g, ''));
+      if (!isNaN(chapter)) {
+        window.location.href = "bab" + chapter + ".html";
+      } else {
+        alert("Masukkan angka bab yang valid, misalnya: 12");
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("overlaySidebar");
+
+      if (sidebar.style.left === "0px") {
+        sidebar.style.left = "-250px";
+        overlay.style.display = "none";
+      } else {
+        sidebar.style.left = "0px";
+        overlay.style.display = "block";
+      }
+    }
+  </script>
+
+</body>
+</html>
+
+
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Baca Manga ID</string>
+
+    <!-- GANTI INI KALAU NAMA REPO/USERNAME GITHUB BERUBAH -->
+    <string name="github_owner">webanh9-droid</string>
+    <string name="github_repo">Bacamangaid</string>
+</resources>

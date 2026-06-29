@@ -1,0 +1,41 @@
+name: Generate Chapter HTML
+
+on:
+  push:
+    paths:
+      - 'bab*.pdf'
+      - '**/bab*.pdf'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect PDF baru/berubah
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- '*bab*.pdf' '**/bab*.pdf' > changed_pdfs.txt || true
+          cat changed_pdfs.txt
+
+      - name: Generate HTML chapter
+        run: |
+          while IFS= read -r pdf; do
+            if [ -f "$pdf" ]; then
+              python3 scripts/generate_chapter_html.py "$pdf"
+            fi
+          done < changed_pdfs.txt
+
+      - name: Commit hasil generate
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Auto-generate chapter HTML"
+          git push

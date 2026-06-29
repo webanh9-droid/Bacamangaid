@@ -1,0 +1,161 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>VN + Delivery Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #000; overflow: hidden; }/* VN MODE */
+#vnScene { position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; background-size:cover; background-position:center; }
+#vnCharacter { position:absolute; bottom:100px; left:50%; transform:translateX(-50%); max-height:80%; }
+#vnTextbox { width:100%; background:rgba(0,0,0,0.7); color:#fff; padding:20px; font-size:18px; }
+#vnName { font-weight:bold; color:#6cf; margin-bottom:10px; }
+
+/* GAME MODE */
+#gameScene { position:absolute; top:0; left:0; width:100%; height:100%; background:#222; display:none; }
+canvas { background:#333; display:block; margin:0 auto; }
+#hud { position:absolute; top:10px; left:10px; color:#fff; font-size:18px; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; }
+
+/* Joystick */
+#joystickContainer { position:absolute; bottom:30px; left:30px; width:120px; height:120px; background:rgba(255,255,255,0.1); border-radius:50%; touch-action:none; }
+#joystick { width:60px; height:60px; background:rgba(0,255,255,0.6); border-radius:50%; position:relative; top:30px; left:30px; }
+
+  </style>
+</head>
+<body>  <!-- VN MODE -->  <div id="vnScene" style="background-image:url('bg.png')">
+    <img id="vnCharacter" src="bintang.png" alt="Kanca">
+    <div id="vnTextbox">
+      <div id="vnName">Kanca</div>
+      <div id="vnText">Hari ini aku harus mengantar pesanan...</div>
+    </div>
+  </div>  <!-- GAME MODE -->  <div id="gameScene">
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="hud">Uang: Rp 0</div>
+    <div id="joystickContainer">
+      <div id="joystick"></div>
+    </div>
+  </div><script>
+// ================= VN MODE =================
+let vnDialog = [
+  { name: "Kanca", text: "Hari ini aku harus mengantar pesanan..." },
+  { name: "Kanca", text: "Baiklah, ayo kita mulai!" },
+  { action: "startGame" }
+];
+let vnIndex = 0;
+const vnName = document.getElementById("vnName");
+const vnText = document.getElementById("vnText");
+const vnScene = document.getElementById("vnScene");
+
+vnScene.addEventListener("click", () => {
+  vnIndex++;
+  if (vnIndex < vnDialog.length) {
+    let line = vnDialog[vnIndex];
+    if (line.action === "startGame") {
+      switchToGame();
+    } else {
+      vnName.textContent = line.name;
+      vnText.textContent = line.text;
+    }
+  }
+});
+
+// ================= GAME MODE =================
+const gameScene = document.getElementById("gameScene");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const hud = document.getElementById("hud");
+
+let player = { x: 180, y: 500, size: 30 };
+let money = 0;
+let obstacles = [];
+let pickups = [];
+let hasOrder = false;
+
+function drawPlayer(){
+  ctx.fillStyle = "cyan";
+  ctx.fillRect(player.x, player.y, player.size, player.size);
+}
+
+function drawObstacles(){
+  ctx.fillStyle = "red";
+  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+}
+
+function drawPickups(){
+  ctx.fillStyle = hasOrder ? "yellow" : "green";
+  pickups.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+}
+
+function update(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawPlayer();
+  drawObstacles();
+  drawPickups();
+
+  // Move obstacles & pickups
+  obstacles.forEach(o => o.y += 4);
+  pickups.forEach(p => p.y += 4);
+
+  // Collision check
+  obstacles.forEach(o => {
+    if (player.x < o.x+o.w && player.x+player.size > o.x && player.y < o.y+o.h && player.y+player.size > o.y) {
+      alert("Game Over - Untuk Affan Kurniawan");
+      location.reload();
+    }
+  });
+
+  pickups.forEach((p,i) => {
+    if (player.x < p.x+p.w && player.x+player.size > p.x && player.y < p.y+p.h && player.y+player.size > p.y) {
+      if (!hasOrder) {
+        hasOrder = true;
+        pickups.splice(i,1);
+      } else {
+        hasOrder = false;
+        money += Math.floor(Math.random()*15000)+10000;
+        hud.textContent = "Uang: Rp "+money;
+        pickups.splice(i,1);
+      }
+    }
+  });
+
+  if (Math.random() < 0.02) obstacles.push({x:Math.random()*360,y:-20,w:40,h:40});
+  if (Math.random() < 0.005) pickups.push({x:Math.random()*360,y:-20,w:40,h:40});
+
+  requestAnimationFrame(update);
+}
+
+function switchToGame(){
+  vnScene.style.display = "none";
+  gameScene.style.display = "block";
+  update();
+}
+
+// Joystick control
+const joystick = document.getElementById("joystick");
+const container = document.getElementById("joystickContainer");
+let dragging = false;
+let origin = {x:0,y:0};
+
+container.addEventListener("touchstart", e => {
+  dragging = true;
+  origin.x = e.touches[0].clientX;
+  origin.y = e.touches[0].clientY;
+});
+container.addEventListener("touchmove", e => {
+  if (!dragging) return;
+  let dx = e.touches[0].clientX - origin.x;
+  let dy = e.touches[0].clientY - origin.y;
+  let dist = Math.min(40, Math.sqrt(dx*dx+dy*dy));
+  let angle = Math.atan2(dy,dx);
+  joystick.style.left = 30 + dist * Math.cos(angle) + "px";
+  joystick.style.top = 30 + dist * Math.sin(angle) + "px";
+  player.x += Math.cos(angle) * 5;
+  player.y += Math.sin(angle) * 5;
+});
+container.addEventListener("touchend", () => {
+  dragging = false;
+  joystick.style.left = "30px";
+  joystick.style.top = "30px";
+});
+</script></body>
+</html>

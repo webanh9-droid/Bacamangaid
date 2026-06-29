@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Status Manga</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #111;
+      color: white;
+      text-align: center;
+    }
+    .toggle-mode {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1002;
+    }
+    .hamburger {
+      font-size: 30px;
+      cursor: pointer;
+      padding: 15px;
+      color: white;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+    }
+    .sidebar {
+      height: 100%;
+      width: 250px;
+      position: fixed;
+      top: 0;
+      left: -250px;
+      background-color: rgba(0, 0, 0, 0.95);
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      z-index: 1000;
+    }
+    .sidebar a {
+      padding: 12px 24px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #444;
+    }
+    .status-btn {
+      display: block;
+      padding: 15px;
+      margin: 10px auto;
+      width: 200px;
+      background-color: #444;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+    .status-btn:hover {
+      background-color: #666;
+    }
+  </style>
+  <script>
+    function toggleMode() {
+      const body = document.body;
+      if (body.style.backgroundColor === 'white') {
+        body.style.backgroundColor = '#111';
+        body.style.color = 'white';
+      } else {
+        body.style.backgroundColor = 'white';
+        body.style.color = '#111';
+      }
+    }
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      if (sidebar.style.left === "0px") {
+        sidebar.style.left = "-250px";
+      } else {
+        sidebar.style.left = "0px";
+      }
+    }
+  </script>
+</head>
+<body>
+  <button class="toggle-mode" onclick="toggleMode()">🌓 Mode</button>
+  <div class="hamburger" onclick="toggleSidebar()">☰</div>
+  <div class="sidebar" id="sidebar">
+    <a href="genre.html">Genre</a>
+    <a href="status.html">Status</a>
+    <a href="index.html">Menu</a>
+  </div>
+
+  <h1 style="color: #b0e0e6;">Pilih Status Manga</h1>
+  <a href="ongoing.html" class="status-btn">Ongoing</a>
+  <a href="finished.html" class="status-btn">Finished</a>
+</body>
+</html>
