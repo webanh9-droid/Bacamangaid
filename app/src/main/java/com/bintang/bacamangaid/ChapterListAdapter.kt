@@ -47,8 +47,10 @@ class ChapterListAdapter(
         if (holder is HeaderViewHolder) {
             holder.title.text = manga.title
 
-            if (!manga.genreName.isNullOrBlank()) {
-                holder.genre.text = manga.genreName
+            // genres sekarang berupa List<GenreItem> (many-to-many), jadi digabung jadi satu string
+            val genreText = manga.genres.joinToString(", ") { it.name }
+            if (genreText.isNotBlank()) {
+                holder.genre.text = genreText
                 holder.genre.visibility = View.VISIBLE
             } else {
                 holder.genre.visibility = View.GONE
