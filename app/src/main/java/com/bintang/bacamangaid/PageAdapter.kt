@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 
-class PageAdapter(private val pages: List<Bitmap>) :
+class PageAdapter(val pages: List<Bitmap>) :
     RecyclerView.Adapter<PageAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

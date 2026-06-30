@@ -3,6 +3,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Background gambar langit malam -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/bg_night_sky"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <!-- Overlay gelap supaya konten tetap terbaca -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC000000" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chapterRecyclerView"
         android:layout_width="match_parent"

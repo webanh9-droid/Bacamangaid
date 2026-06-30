@@ -5,10 +5,11 @@ import android.content.Context
 object SessionManager {
     private const val PREF_NAME = "bacamangaid_session"
 
-    fun saveSession(context: Context, accessToken: String, userId: String, email: String) {
+    fun saveSession(context: Context, accessToken: String, refreshToken: String, userId: String, email: String) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit()
             .putString("access_token", accessToken)
+            .putString("refresh_token", refreshToken)
             .putString("user_id", userId)
             .putString("email", email)
             .apply()
@@ -16,6 +17,9 @@ object SessionManager {
 
     fun getAccessToken(context: Context): String? =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getString("access_token", null)
+
+    fun getRefreshToken(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getString("refresh_token", null)
 
     fun getUserId(context: Context): String? =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getString("user_id", null)

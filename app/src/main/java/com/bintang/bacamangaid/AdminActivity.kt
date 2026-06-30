@@ -40,16 +40,30 @@ class AdminActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
 
-        val token = SessionManager.getAccessToken(this)
+        val storedToken = SessionManager.getAccessToken(this)
         val userId = SessionManager.getUserId(this)
 
-        if (token == null || userId == null) {
+        if (storedToken == null || userId == null) {
             Toast.makeText(this, "Login dulu", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
         Thread {
+            // Coba refresh token dulu biar session gak expired — kalau gagal, pakai token lama
+            val token = try {
+                val refreshToken = SessionManager.getRefreshToken(this)
+                if (!refreshToken.isNullOrEmpty()) {
+                    val refreshed = AuthApi.refreshSession(refreshToken)
+                    SessionManager.saveSession(this, refreshed.accessToken, refreshed.refreshToken, refreshed.userId, refreshed.email)
+                    refreshed.accessToken
+                } else {
+                    storedToken
+                }
+            } catch (e: Exception) {
+                storedToken // fallback ke token lama kalau refresh gagal
+            }
+
             val isAdmin = try {
                 AdminApi.isAdmin(token, userId)
             } catch (e: Exception) {
