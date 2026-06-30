@@ -52,6 +52,8 @@ class AccountActivity : AppCompatActivity() {
                 try {
                     val result = AuthApi.signIn(email, password)
                     SessionManager.saveSession(this, result.accessToken, result.refreshToken, result.userId, result.email)
+                    runOnUiThread {
+                        Toast.makeText(this, "Login berhasil", Toast.LENGTH_SHORT).show()
                         refreshUi()
                     }
                 } catch (e: Exception) {
