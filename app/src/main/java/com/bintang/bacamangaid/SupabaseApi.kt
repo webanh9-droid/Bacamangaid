@@ -58,6 +58,50 @@ object SupabaseApi {
         return list
     }
 
+    /**
+     * Ambil rata-rata rating per manga_title dari tabel manga_ratings.
+     * Return: map dari manga_title (lowercase) -> avgRating (Float)
+     * Dipanggil sekali dari MangaListFragment bersamaan dengan fetchAllManga,
+     * supaya card manga langsung bisa tampilkan bintang rata-rata.
+     */
+    /**
+     * Hitung total pembaca per manga dari reading_history.
+     * Tiap baris = 1 sesi baca (1 user buka 1 chapter = 1 view).
+     * Return: map manga_title lowercase -> total views
+     */
+    fun fetchViewCounts(): Map<String, Int> {
+        val url = "$SUPABASE_URL/rest/v1/reading_history?select=manga_title"
+        val response = getRequest(url, null)
+        val arr = JSONArray(response)
+        val counts = mutableMapOf<String, Int>()
+        for (i in 0 until arr.length()) {
+            val title = arr.getJSONObject(i).optString("manga_title", "").lowercase()
+            if (title.isNotEmpty()) counts[title] = (counts[title] ?: 0) + 1
+        }
+        return counts
+    }
+
+    fun fetchAvgRatings(): Map<String, Float> {
+        // Pakai PostgREST aggregate: group by manga_title, avg(rating)
+        val url = "$SUPABASE_URL/rest/v1/manga_ratings?select=manga_title,rating"
+        val response = getRequest(url, null)
+        val arr = JSONArray(response)
+
+        // Hitung manual (PostgREST free tier gak support aggregate langsung)
+        val sums   = mutableMapOf<String, Float>()
+        val counts = mutableMapOf<String, Int>()
+        for (i in 0 until arr.length()) {
+            val obj   = arr.getJSONObject(i)
+            val title = obj.optString("manga_title", "").lowercase()
+            val r     = obj.optInt("rating", 0)
+            if (title.isNotEmpty() && r > 0) {
+                sums[title]   = (sums[title] ?: 0f) + r
+                counts[title] = (counts[title] ?: 0) + 1
+            }
+        }
+        return sums.mapValues { (title, sum) -> sum / (counts[title] ?: 1) }
+    }
+
     fun fetchGenres(): List<GenreItem> {
         val url = "$SUPABASE_URL/rest/v1/genres?select=id,name&order=name"
         val response = getRequest(url, null)
