@@ -10,7 +10,7 @@
     android:layout_marginBottom="6dp"
     android:background="@drawable/bg_manga_card">
 
-    <!-- Cover image -->
+    <!-- Cover -->
     <ImageView
         android:id="@+id/mangaCover"
         android:layout_width="54dp"
@@ -27,6 +27,7 @@
         android:layout_marginStart="12dp"
         android:orientation="vertical">
 
+        <!-- Judul -->
         <TextView
             android:id="@+id/mangaName"
             android:layout_width="match_parent"
@@ -37,12 +38,12 @@
             android:maxLines="2"
             android:ellipsize="end" />
 
-        <!-- Tags row: genre + status -->
+        <!-- Genre + Status -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="5dp"
             android:gravity="center_vertical">
 
             <TextView
@@ -73,6 +74,24 @@
                 android:visibility="gone" />
 
         </LinearLayout>
+
+        <!-- Rating bintang -->
+        <TextView
+            android:id="@+id/mangaRating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:textColor="#FFD700"
+            android:textSize="12sp" />
+
+        <!-- Total pembaca -->
+        <TextView
+            android:id="@+id/mangaViews"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#888888"
+            android:textSize="11sp" />
 
     </LinearLayout>
 

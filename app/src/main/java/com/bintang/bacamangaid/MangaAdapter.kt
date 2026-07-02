@@ -17,9 +17,11 @@ class MangaAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cover: ImageView = view.findViewById(R.id.mangaCover)
-        val name: TextView = view.findViewById(R.id.mangaName)
-        val genre: TextView = view.findViewById(R.id.mangaGenre)
+        val name: TextView   = view.findViewById(R.id.mangaName)
+        val genre: TextView  = view.findViewById(R.id.mangaGenre)
         val status: TextView = view.findViewById(R.id.mangaStatus)
+        val rating: TextView = view.findViewById(R.id.mangaRating)
+        val views: TextView  = view.findViewById(R.id.mangaViews)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, position: Int): ViewHolder {
@@ -32,7 +34,7 @@ class MangaAdapter(
         holder.name.text = manga.title
         holder.cover.setImageDrawable(null)
 
-        // Genre tags — tampilkan semua genre dipisah koma
+        // Genre
         if (manga.genres.isNotEmpty()) {
             holder.genre.text = manga.genres.joinToString(" · ") { it.name }
             holder.genre.visibility = View.VISIBLE
@@ -40,11 +42,10 @@ class MangaAdapter(
             holder.genre.visibility = View.GONE
         }
 
-        // Status tag dengan warna dinamis
+        // Status
         if (!manga.statusName.isNullOrBlank()) {
             holder.status.text = manga.statusName
             holder.status.visibility = View.VISIBLE
-
             val (bgHex, strokeHex) = when (manga.statusName.lowercase()) {
                 "ongoing"   -> Pair("#0A2A14", "#22C55E")
                 "completed" -> Pair("#0A1A3A", "#4D9FFF")
@@ -61,12 +62,31 @@ class MangaAdapter(
             holder.status.visibility = View.GONE
         }
 
-        // Load cover
+        // Rating — selalu tampilkan (kosong kalau belum ada rating)
+        if (manga.avgRating > 0f) {
+            val full  = manga.avgRating.toInt()
+            val half  = if (manga.avgRating - full >= 0.3f && full < 5) 1 else 0
+            val empty = 5 - full - half
+            val stars = "★".repeat(full) + "½".repeat(half) + "☆".repeat(empty)
+            holder.rating.text = "$stars ${"%.1f".format(manga.avgRating)}"
+        } else {
+            holder.rating.text = "☆☆☆☆☆ Belum ada rating"
+        }
+        holder.rating.visibility = View.VISIBLE
+
+        // Views — selalu tampilkan
+        val viewText = when {
+            manga.totalViews >= 1000 -> "${"%.1f".format(manga.totalViews / 1000f)}k"
+            else -> manga.totalViews.toString()
+        }
+        holder.views.text = "👁 $viewText pembaca"
+        holder.views.visibility = View.VISIBLE
+
+        // Cover
         if (!manga.coverUrl.isNullOrBlank()) {
             Thread {
                 try {
-                    val input = URL(manga.coverUrl).openStream()
-                    val bitmap = BitmapFactory.decodeStream(input)
+                    val bitmap = BitmapFactory.decodeStream(URL(manga.coverUrl).openStream())
                     holder.cover.post { holder.cover.setImageBitmap(bitmap) }
                 } catch (e: Exception) { }
             }.start()

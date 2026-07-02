@@ -106,6 +106,8 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
                 val metaMap = metaList.associateBy { it.title.lowercase() }
                 val genres = try { SupabaseApi.fetchGenres() } catch (e: Exception) { emptyList() }
                 val statuses = try { SupabaseApi.fetchStatuses() } catch (e: Exception) { emptyList() }
+                val avgRatings = try { SupabaseApi.fetchAvgRatings() } catch (e: Exception) { emptyMap() }
+                val viewCounts = try { SupabaseApi.fetchViewCounts() } catch (e: Exception) { emptyMap() }
 
                 val combined = githubTitles.map { title ->
                     val meta = metaMap[title.lowercase()]
@@ -116,7 +118,9 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
                         synopsis = meta?.synopsis,
                         genres = meta?.genres ?: emptyList(),
                         statusId = meta?.statusId,
-                        statusName = meta?.statusName
+                        statusName = meta?.statusName,
+                        avgRating = avgRatings[title.lowercase()] ?: 0f,
+                        totalViews = viewCounts[title.lowercase()] ?: 0
                     )
                 }
 
