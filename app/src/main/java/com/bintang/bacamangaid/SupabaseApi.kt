@@ -133,6 +133,44 @@ object SupabaseApi {
         return counts
     }
 
+    /**
+     * Simpan/update rating user untuk chapter tertentu (upsert by user_id + manga_title + chapter_num).
+     * rating: 1-5
+     */
+    fun submitRating(accessToken: String, userId: String, mangaTitle: String, chapterNum: Int, rating: Int) {
+        val url = URL("$SUPABASE_URL/rest/v1/manga_ratings?on_conflict=user_id,manga_title,chapter_num")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.setRequestProperty("apikey", SUPABASE_ANON_KEY)
+        connection.setRequestProperty("Authorization", "Bearer $accessToken")
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.setRequestProperty("Prefer", "resolution=merge-duplicates")
+        connection.doOutput = true
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+
+        val body = JSONObject()
+        body.put("user_id", userId)
+        body.put("manga_title", mangaTitle)
+        body.put("chapter_num", chapterNum)
+        body.put("rating", rating)
+        connection.outputStream.use { it.write(body.toString().toByteArray()) }
+        connection.responseCode
+        connection.disconnect()
+    }
+
+    /**
+     * Ambil rating yang sudah pernah dikasih user untuk chapter ini (0 kalau belum pernah rating).
+     */
+    fun fetchRating(accessToken: String, userId: String, mangaTitle: String, chapterNum: Int): Int {
+        val url = "$SUPABASE_URL/rest/v1/manga_ratings?select=rating&user_id=eq.$userId&manga_title=eq.${
+            java.net.URLEncoder.encode(mangaTitle, "UTF-8")
+        }&chapter_num=eq.$chapterNum"
+        val response = getRequest(url, accessToken)
+        val arr = JSONArray(response)
+        return if (arr.length() > 0) arr.getJSONObject(0).optInt("rating", 0) else 0
+    }
+
     private fun getRequest(urlStr: String, accessToken: String?): String {
         val connection = URL(urlStr).openConnection() as HttpURLConnection
         connection.setRequestProperty("apikey", SUPABASE_ANON_KEY)

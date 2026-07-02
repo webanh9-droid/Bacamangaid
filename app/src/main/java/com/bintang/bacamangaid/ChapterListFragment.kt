@@ -78,6 +78,7 @@ class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
                             val intent = Intent(requireContext(), ReaderActivity::class.java)
                             intent.putExtra(ReaderActivity.EXTRA_PDF_URL, pdfUrl)
                             intent.putExtra(ReaderActivity.EXTRA_TITLE, "$mangaTitle - Chapter $chapterNum")
+                            intent.putExtra(ReaderActivity.EXTRA_MANGA_TITLE, mangaTitle)
                             intent.putExtra(ReaderActivity.EXTRA_CHAPTER_NUM, chapterNum)
                             // Pass semua chapter berurutan buat fitur auto-lanjut chapter
                             intent.putStringArrayListExtra(

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#1A1A2E"
+    android:paddingTop="24dp"
+    android:paddingBottom="32dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333355"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Rating -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nilai chapter ini"
+        android:textColor="#AAAACC"
+        android:textSize="13sp"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:id="@+id/ratingContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+
+        <TextView android:id="@+id/star1" android:layout_width="40dp" android:layout_height="40dp"
+            android:gravity="center" android:text="☆" android:textSize="28sp" android:textColor="#FFD700" />
+        <TextView android:id="@+id/star2" android:layout_width="40dp" android:layout_height="40dp"
+            android:gravity="center" android:text="☆" android:textSize="28sp" android:textColor="#FFD700" />
+        <TextView android:id="@+id/star3" android:layout_width="40dp" android:layout_height="40dp"
+            android:gravity="center" android:text="☆" android:textSize="28sp" android:textColor="#FFD700" />
+        <TextView android:id="@+id/star4" android:layout_width="40dp" android:layout_height="40dp"
+            android:gravity="center" android:text="☆" android:textSize="28sp" android:textColor="#FFD700" />
+        <TextView android:id="@+id/star5" android:layout_width="40dp" android:layout_height="40dp"
+            android:gravity="center" android:text="☆" android:textSize="28sp" android:textColor="#FFD700" />
+
+    </LinearLayout>
+
+    <!-- Daftar chapter label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pilih Chapter"
+        android:textColor="#AAAACC"
+        android:textSize="13sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Chapter list scroll horizontal -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:layout_marginBottom="20dp">
+
+        <LinearLayout
+            android:id="@+id/chapterListContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
+    <!-- Navigasi prev / next -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnPrevChapter"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="◀ Sebelumnya"
+            android:textSize="13sp"
+            android:backgroundTint="#2A2A4A"
+            android:textColor="#AAAAFF"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnNextChapter"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Selanjutnya ▶"
+            android:textSize="13sp"
+            android:backgroundTint="#3A3AFF"
+            android:textColor="#FFFFFF"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</LinearLayout>
