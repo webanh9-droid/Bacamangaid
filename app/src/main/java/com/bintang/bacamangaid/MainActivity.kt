@@ -16,9 +16,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun openChapterList(mangaTitle: String) {
+    fun openChapterList(mangaId: Long, mangaTitle: String) {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, ChapterListFragment.newInstance(mangaTitle))
+            .replace(R.id.fragmentContainer, ChapterListFragment.newInstance(mangaId, mangaTitle))
             .addToBackStack(null)
             .commit()
     }

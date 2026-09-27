@@ -1,6 +1,7 @@
 package com.bintang.bacamangaid
 
 data class MangaDisplay(
+    val id: Long,
     val title: String,
     val coverUrl: String?,
     val synopsis: String?,

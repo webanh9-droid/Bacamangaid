@@ -11,7 +11,7 @@ import java.net.URL
 
 class MangaHorizontalAdapter(
     private val items: List<MangaDisplay>,
-    private val onClick: (String) -> Unit
+    private val onClick: (Long, String) -> Unit
 ) : RecyclerView.Adapter<MangaHorizontalAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -39,7 +39,7 @@ class MangaHorizontalAdapter(
             }.start()
         }
 
-        holder.itemView.setOnClickListener { onClick(manga.title) }
+        holder.itemView.setOnClickListener { onClick(manga.id, manga.title) }
     }
 
     override fun getItemCount() = items.size

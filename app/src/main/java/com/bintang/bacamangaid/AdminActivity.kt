@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 class AdminActivity : AppCompatActivity() {
 
-    private var mangaTitles: List<String> = emptyList()
+    private var mangaOptions: List<MangaMeta> = emptyList()
     private var genres: List<GenreItem> = emptyList()
     private var statuses: List<StatusItem> = emptyList()
 
@@ -50,16 +50,8 @@ class AdminActivity : AppCompatActivity() {
         }
 
         Thread {
-            // Coba refresh token dulu biar session gak expired — kalau gagal, pakai token lama
             val token = try {
-                val refreshToken = SessionManager.getRefreshToken(this)
-                if (!refreshToken.isNullOrEmpty()) {
-                    val refreshed = AuthApi.refreshSession(refreshToken)
-                    SessionManager.saveSession(this, refreshed.accessToken, refreshed.refreshToken, refreshed.userId, refreshed.email)
-                    refreshed.accessToken
-                } else {
-                    storedToken
-                }
+                freshToken()
             } catch (e: Exception) {
                 storedToken // fallback ke token lama kalau refresh gagal
             }
@@ -75,18 +67,48 @@ class AdminActivity : AppCompatActivity() {
                     Toast.makeText(this, "Akun ini bukan admin", Toast.LENGTH_LONG).show()
                     finish()
                 } else {
-                    setupAdminUi(token)
+                    setupAdminUi()
                 }
             }
         }.start()
     }
 
-    /** Ambil judul manga yang dipakai: prioritaskan input judul baru kalau diisi, kalau kosong pakai pilihan spinner. */
-    private fun getActiveTitle(newTitleInput: EditText, mangaSpinner: Spinner): String? {
+    /**
+     * Selalu refresh access token dulu sebelum dipakai, jangan pakai token lama yang di-capture
+     * di awal — access token Supabase umurnya cuma 1 jam, kalau admin panel dibiarkan terbuka
+     * lebih lama dari itu, token lama bakal expired dan semua request kelihatan kayak "akun hilang"
+     * padahal cuma token basi. Dipanggil ulang di tiap aksi (save, upload, add admin), bukan cuma sekali.
+     */
+    private fun freshToken(): String {
+        val refreshToken = SessionManager.getRefreshToken(this)
+            ?: return SessionManager.getAccessToken(this) ?: throw Exception("Belum login")
+        return try {
+            val refreshed = AuthApi.refreshSession(refreshToken)
+            SessionManager.saveSession(this, refreshed.accessToken, refreshed.refreshToken, refreshed.userId, refreshed.email)
+            refreshed.accessToken
+        } catch (e: Exception) {
+            // fallback ke access token lama yang masih tersimpan, kalau-kalau refresh endpoint lagi gangguan
+            SessionManager.getAccessToken(this) ?: throw e
+        }
+    }
+
+    /**
+     * Pastikan ada baris manga di database buat judul yang lagi aktif, balikin (id, title)-nya:
+     * - kalau input "judul manga baru" diisi -> get-or-create by title itu (bikin baris baru kalau
+     *   belum ada, atau pakai yang sudah ada kalau ternyata judulnya sama — jadi typo pun aman,
+     *   nggak bakal kebuat manga duplikat, tinggal nyambung ke manga yang sudah ada)
+     * - kalau kosong -> pakai manga yang dipilih di spinner (idnya sudah pasti valid dari database)
+     * null kalau nggak ada satupun manga buat dipakai (spinner kosong & input judul baru kosong).
+     */
+    private fun resolveActiveManga(token: String, newTitleInput: EditText, mangaSpinner: Spinner): Pair<Long, String>? {
         val newTitle = newTitleInput.text.toString().trim()
-        if (newTitle.isNotEmpty()) return newTitle
-        if (mangaTitles.isEmpty()) return null
-        return mangaTitles.getOrNull(mangaSpinner.selectedItemPosition)
+        if (newTitle.isNotEmpty()) {
+            val id = AdminApi.getOrCreateMangaId(token, newTitle)
+            return Pair(id, newTitle)
+        }
+        if (mangaOptions.isEmpty()) return null
+        val selected = mangaOptions.getOrNull(mangaSpinner.selectedItemPosition) ?: return null
+        return Pair(selected.id, selected.title)
     }
 
     /** Bikin 1 CheckBox per genre di dalam container, masing-masing pakai genre.id sebagai tag. */
@@ -113,7 +135,7 @@ class AdminActivity : AppCompatActivity() {
         return selected
     }
 
-    private fun setupAdminUi(token: String) {
+    private fun setupAdminUi() {
         val mangaSpinner = findViewById<Spinner>(R.id.mangaSpinner)
         val newTitleInput = findViewById<EditText>(R.id.newMangaTitleInput)
         val genreCheckboxContainer = findViewById<LinearLayout>(R.id.genreCheckboxContainer)
@@ -124,13 +146,15 @@ class AdminActivity : AppCompatActivity() {
 
         Thread {
             try {
-                mangaTitles = GitHubApi.listMangaTitles()
+                // Daftar manga buat spinner sekarang datang dari tabel manga di Supabase (punya id),
+                // bukan hasil scan nama file PDF di repo GitHub lagi.
+                mangaOptions = try { SupabaseApi.fetchAllManga().sortedBy { it.title.lowercase() } } catch (e: Exception) { emptyList() }
                 genres = try { SupabaseApi.fetchGenres() } catch (e: Exception) { emptyList() }
                 statuses = try { SupabaseApi.fetchStatuses() } catch (e: Exception) { emptyList() }
 
                 runOnUiThread {
                     mangaSpinner.adapter = ArrayAdapter(
-                        this, android.R.layout.simple_spinner_dropdown_item, mangaTitles
+                        this, android.R.layout.simple_spinner_dropdown_item, mangaOptions.map { it.title }
                     )
 
                     populateGenreCheckboxes(genreCheckboxContainer, genres)
@@ -140,15 +164,15 @@ class AdminActivity : AppCompatActivity() {
                         this, android.R.layout.simple_spinner_dropdown_item, statusNames
                     )
 
-                    if (mangaTitles.isEmpty()) {
+                    if (mangaOptions.isEmpty()) {
                         Toast.makeText(
                             this,
-                            "Belum ada manga di repo. Isi 'judul manga baru' di bawah buat mulai upload chapter pertama.",
+                            "Belum ada manga. Isi 'judul manga baru' di bawah buat mulai upload chapter pertama.",
                             Toast.LENGTH_LONG
                         ).show()
                         chapterNumberInput.setText("1")
                     } else {
-                        suggestNextChapterNumber(mangaTitles[0], chapterNumberInput)
+                        suggestNextChapterNumber(mangaOptions[0].id, chapterNumberInput)
                     }
                 }
             } catch (e: Exception) {
@@ -160,8 +184,8 @@ class AdminActivity : AppCompatActivity() {
 
         mangaSpinner.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: android.widget.AdapterView<*>?, v: android.view.View?, pos: Int, id: Long) {
-                if (mangaTitles.isNotEmpty() && newTitleInput.text.toString().isBlank()) {
-                    suggestNextChapterNumber(mangaTitles[pos], chapterNumberInput)
+                if (mangaOptions.isNotEmpty() && newTitleInput.text.toString().isBlank()) {
+                    suggestNextChapterNumber(mangaOptions[pos].id, chapterNumberInput)
                 }
             }
             override fun onNothingSelected(p: android.widget.AdapterView<*>?) {}
@@ -178,18 +202,20 @@ class AdminActivity : AppCompatActivity() {
         })
 
         findViewById<Button>(R.id.btnSaveMeta).setOnClickListener {
-            val title = getActiveTitle(newTitleInput, mangaSpinner)
-            if (title == null) {
-                Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
             val synopsis = synopsisInput.text.toString()
             val genreIds = getSelectedGenreIds(genreCheckboxContainer)
             val statusId = statuses.getOrNull(statusSpinner.selectedItemPosition)?.id
 
             Thread {
                 try {
-                    AdminApi.upsertMangaMeta(token, title, synopsis, statusId, genreIds)
+                    val token = freshToken()
+                    val active = resolveActiveManga(token, newTitleInput, mangaSpinner)
+                    if (active == null) {
+                        runOnUiThread { Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show() }
+                        return@Thread
+                    }
+                    val (mangaId, title) = active
+                    AdminApi.upsertMangaMeta(token, mangaId, synopsis, statusId, genreIds)
                     runOnUiThread { Toast.makeText(this, "Sinopsis, status & genre disimpan untuk \"$title\"", Toast.LENGTH_SHORT).show() }
                 } catch (e: Exception) {
                     runOnUiThread { Toast.makeText(this, e.message ?: "Gagal menyimpan", Toast.LENGTH_LONG).show() }
@@ -207,25 +233,29 @@ class AdminActivity : AppCompatActivity() {
                 Toast.makeText(this, "Pilih file PDF dulu", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val title = getActiveTitle(newTitleInput, mangaSpinner)
-            if (title == null) {
-                Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
             val chapterNum = chapterNumberInput.text.toString().toIntOrNull()
             if (chapterNum == null) {
                 Toast.makeText(this, "Isi nomor chapter dulu", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            Toast.makeText(this, "Mengupload chapter $chapterNum untuk \"$title\"...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Mengupload chapter $chapterNum...", Toast.LENGTH_SHORT).show()
 
             Thread {
                 try {
+                    val token = freshToken()
+                    val active = resolveActiveManga(token, newTitleInput, mangaSpinner)
+                        ?: throw Exception("Pilih manga atau isi judul manga baru dulu")
+                    val (mangaId, title) = active
+
                     val bytes = contentResolver.openInputStream(uri)?.readBytes()
                         ?: throw Exception("Gagal baca file")
                     val fileName = "$title Chapter $chapterNum.pdf"
-                    GitHubWriteApi.uploadFile(fileName, bytes, "Upload $fileName lewat admin panel")
+                    val pdfUrl = GitHubWriteApi.uploadFile(fileName, bytes, "Upload $fileName lewat admin panel")
+                    // Catat chapter ini ke database (manga_id + nomor + url) — sekali insert, gak perlu
+                    // scan ulang semua file tiap buka app lagi.
+                    AdminApi.insertChapter(token, mangaId, chapterNum, pdfUrl)
+
                     runOnUiThread {
                         Toast.makeText(this, "Chapter $chapterNum \"$title\" berhasil di-upload!", Toast.LENGTH_LONG).show()
                         findViewById<TextView>(R.id.selectedPdfName).text = "Belum ada file dipilih"
@@ -248,22 +278,25 @@ class AdminActivity : AppCompatActivity() {
                 Toast.makeText(this, "Pilih gambar cover dulu", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val title = getActiveTitle(newTitleInput, mangaSpinner)
-            if (title == null) {
-                Toast.makeText(this, "Pilih manga atau isi judul manga baru dulu", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
 
-            Toast.makeText(this, "Mengupload cover untuk \"$title\"...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Mengupload cover...", Toast.LENGTH_SHORT).show()
 
             Thread {
                 try {
+                    val token = freshToken()
+                    val active = resolveActiveManga(token, newTitleInput, mangaSpinner)
+                        ?: throw Exception("Pilih manga atau isi judul manga baru dulu")
+                    val (mangaId, title) = active
+
                     val bytes = contentResolver.openInputStream(uri)?.readBytes()
                         ?: throw Exception("Gagal baca gambar")
                     val mime = contentResolver.getType(uri) ?: ""
                     val ext = if (mime.contains("png")) "png" else "jpg"
                     val fileName = "$title Cover.$ext"
-                    GitHubWriteApi.uploadFile(fileName, bytes, "Upload cover $title lewat admin panel")
+                    val coverUrl = GitHubWriteApi.uploadFile(fileName, bytes, "Upload cover $title lewat admin panel")
+                    // Simpan langsung URL cover-nya ke baris manga di database.
+                    AdminApi.updateMangaCoverUrl(token, mangaId, coverUrl)
+
                     runOnUiThread {
                         Toast.makeText(this, "Cover \"$title\" berhasil di-upload!", Toast.LENGTH_LONG).show()
                         findViewById<TextView>(R.id.selectedCoverName).text = "Belum ada gambar dipilih"
@@ -283,6 +316,7 @@ class AdminActivity : AppCompatActivity() {
             }
             Thread {
                 try {
+                    val token = freshToken()
                     AdminApi.addAdminByEmail(token, email)
                     runOnUiThread {
                         Toast.makeText(this, "$email berhasil dijadikan admin", Toast.LENGTH_LONG).show()
@@ -295,11 +329,10 @@ class AdminActivity : AppCompatActivity() {
         }
     }
 
-    private fun suggestNextChapterNumber(title: String, chapterNumberInput: EditText) {
+    private fun suggestNextChapterNumber(mangaId: Long, chapterNumberInput: EditText) {
         Thread {
             try {
-                val chapters = GitHubApi.listChaptersForTitle(title)
-                val nextNum = (chapters.maxOfOrNull { it.first } ?: 0) + 1
+                val nextNum = SupabaseApi.fetchMaxChapterNumber(mangaId) + 1
                 runOnUiThread { chapterNumberInput.setText(nextNum.toString()) }
             } catch (e: Exception) { }
         }.start()

@@ -6,6 +6,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 data class MangaMeta(
+    val id: Long,
     val title: String,
     val synopsis: String?,
     val genres: List<GenreItem> = emptyList(),
@@ -23,14 +24,17 @@ object SupabaseApi {
     private const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwdXl2Y3dyZHJsdHhiaGRlZ3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwODQzNDcsImV4cCI6MjA4NzY2MDM0N30.kOZ381kxAGFkI_rz4L3G9lJ8ioxVIp6ujiD0xrgI7cE"
 
     fun fetchAllManga(): List<MangaMeta> {
-        // Pakai Supabase nested select lewat tabel relasi manga_genres
-        val url = "$SUPABASE_URL/rest/v1/manga?select=title,synopsis,cover_url,status_id,manga_statuses(name),manga_genres(genre_id,genres(id,name))"
+        // Pakai Supabase nested select lewat tabel relasi manga_genres.
+        // "id" sekarang wajib diambil — ini yang dipakai sebagai kunci utama manga
+        // (ganti dari cocokin title string), buat relasi ke tabel chapters.
+        val url = "$SUPABASE_URL/rest/v1/manga?select=id,title,synopsis,cover_url,status_id,manga_statuses(name),manga_genres(genre_id,genres(id,name))"
         val response = getRequest(url, null)
         val jsonArray = JSONArray(response)
 
         val list = mutableListOf<MangaMeta>()
         for (i in 0 until jsonArray.length()) {
             val obj = jsonArray.getJSONObject(i)
+            val id = obj.getLong("id")
             val title = obj.getString("title")
             val synopsis = if (obj.isNull("synopsis")) null else obj.optString("synopsis")
             val coverOverride = if (obj.isNull("cover_url")) null else obj.optString("cover_url")
@@ -53,17 +57,35 @@ object SupabaseApi {
                 }
             }
 
-            list.add(MangaMeta(title, synopsis, genres, coverOverride, statusId, statusName))
+            list.add(MangaMeta(id, title, synopsis, genres, coverOverride, statusId, statusName))
         }
         return list
     }
 
     /**
-     * Ambil rata-rata rating per manga_title dari tabel manga_ratings.
-     * Return: map dari manga_title (lowercase) -> avgRating (Float)
-     * Dipanggil sekali dari MangaListFragment bersamaan dengan fetchAllManga,
-     * supaya card manga langsung bisa tampilkan bintang rata-rata.
+     * Daftar chapter (nomor + url PDF) untuk 1 manga, by manga_id — bukan cocokin nama file lagi.
+     * Ini yang dipakai ChapterListFragment/ReaderActivity, gantiin GitHubApi.listChaptersForTitle().
      */
+    fun fetchChaptersForManga(mangaId: Long): List<Pair<Int, String>> {
+        val url = "$SUPABASE_URL/rest/v1/chapters?select=chapter_number,pdf_url&manga_id=eq.$mangaId&order=chapter_number"
+        val response = getRequest(url, null)
+        val arr = JSONArray(response)
+        val list = mutableListOf<Pair<Int, String>>()
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            list.add(Pair(obj.getInt("chapter_number"), obj.getString("pdf_url")))
+        }
+        return list
+    }
+
+    /** Nomor chapter terakhir yang sudah ada buat 1 manga (0 kalau belum ada chapter sama sekali). */
+    fun fetchMaxChapterNumber(mangaId: Long): Int {
+        val url = "$SUPABASE_URL/rest/v1/chapters?select=chapter_number&manga_id=eq.$mangaId&order=chapter_number.desc&limit=1"
+        val response = getRequest(url, null)
+        val arr = JSONArray(response)
+        return if (arr.length() > 0) arr.getJSONObject(0).getInt("chapter_number") else 0
+    }
+
     /**
      * Hitung total pembaca per manga dari reading_history.
      * Tiap baris = 1 sesi baca (1 user buka 1 chapter = 1 view).

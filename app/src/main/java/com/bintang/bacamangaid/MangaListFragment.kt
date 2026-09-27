@@ -70,7 +70,6 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
         })
 
         swipeRefresh.setOnRefreshListener {
-            GitHubApi.clearCache()
             loadMangaList(recommendedRecyclerView, recommendedLabel, loading, errorText, swipeRefresh)
         }
 
@@ -100,27 +99,25 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
 
         Thread {
             try {
-                val githubTitles = GitHubApi.listMangaTitles()
-                val covers = GitHubApi.listAllCoverFiles().associateBy { it.title.lowercase() }
+                // Daftar manga sekarang datang langsung dari tabel manga di Supabase (sumber utama,
+                // punya id) — bukan hasil scan & parsing nama file PDF dari repo GitHub lagi.
                 val metaList = try { SupabaseApi.fetchAllManga() } catch (e: Exception) { emptyList() }
-                val metaMap = metaList.associateBy { it.title.lowercase() }
                 val genres = try { SupabaseApi.fetchGenres() } catch (e: Exception) { emptyList() }
                 val statuses = try { SupabaseApi.fetchStatuses() } catch (e: Exception) { emptyList() }
                 val avgRatings = try { SupabaseApi.fetchAvgRatings() } catch (e: Exception) { emptyMap() }
                 val viewCounts = try { SupabaseApi.fetchViewCounts() } catch (e: Exception) { emptyMap() }
 
-                val combined = githubTitles.map { title ->
-                    val meta = metaMap[title.lowercase()]
-                    val coverFromGithub = covers[title.lowercase()]?.downloadUrl
+                val combined = metaList.map { meta ->
                     MangaDisplay(
-                        title = title,
-                        coverUrl = coverFromGithub ?: meta?.coverUrlOverride,
-                        synopsis = meta?.synopsis,
-                        genres = meta?.genres ?: emptyList(),
-                        statusId = meta?.statusId,
-                        statusName = meta?.statusName,
-                        avgRating = avgRatings[title.lowercase()] ?: 0f,
-                        totalViews = viewCounts[title.lowercase()] ?: 0
+                        id = meta.id,
+                        title = meta.title,
+                        coverUrl = meta.coverUrlOverride,
+                        synopsis = meta.synopsis,
+                        genres = meta.genres,
+                        statusId = meta.statusId,
+                        statusName = meta.statusName,
+                        avgRating = avgRatings[meta.title.lowercase()] ?: 0f,
+                        totalViews = viewCounts[meta.title.lowercase()] ?: 0
                     )
                 }
 
@@ -155,8 +152,8 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
                         if (recommended.isNotEmpty()) {
                             recommendedLabel.visibility = View.VISIBLE
                             recommendedRecyclerView.visibility = View.VISIBLE
-                            recommendedRecyclerView.adapter = MangaHorizontalAdapter(recommended) { title ->
-                                (activity as? MainActivity)?.openChapterList(title)
+                            recommendedRecyclerView.adapter = MangaHorizontalAdapter(recommended) { id, title ->
+                                (activity as? MainActivity)?.openChapterList(id, title)
                             }
                         } else {
                             recommendedLabel.visibility = View.GONE
@@ -260,8 +257,8 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
             val matchesStatus = selectedStatusId == null || manga.statusId == selectedStatusId
             matchesSearch && matchesGenre && matchesStatus
         }
-        recyclerView.adapter = MangaAdapter(filtered) { title ->
-            (activity as? MainActivity)?.openChapterList(title)
+        recyclerView.adapter = MangaAdapter(filtered) { id, title ->
+            (activity as? MainActivity)?.openChapterList(id, title)
         }
     }
 }

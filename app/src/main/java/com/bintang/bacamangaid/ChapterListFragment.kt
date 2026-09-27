@@ -14,11 +14,13 @@ import androidx.recyclerview.widget.RecyclerView
 class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
 
     companion object {
+        private const val ARG_MANGA_ID = "manga_id"
         private const val ARG_TITLE = "manga_title"
 
-        fun newInstance(title: String): ChapterListFragment {
+        fun newInstance(mangaId: Long, title: String): ChapterListFragment {
             val fragment = ChapterListFragment()
             val args = Bundle()
+            args.putLong(ARG_MANGA_ID, mangaId)
             args.putString(ARG_TITLE, title)
             fragment.arguments = args
             return fragment
@@ -28,6 +30,7 @@ class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val mangaId = arguments?.getLong(ARG_MANGA_ID) ?: return
         val mangaTitle = arguments?.getString(ARG_TITLE) ?: return
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.chapterRecyclerView)
@@ -39,18 +42,20 @@ class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
 
         Thread {
             try {
-                val chapters = GitHubApi.listChaptersForTitle(mangaTitle)
-                val coverUrl = GitHubApi.getCoverUrlForTitle(mangaTitle)
+                // Chapter & metadata sekarang diambil by manga_id dari Supabase, bukan
+                // cocokin nama file GitHub — jadi judul manga nggak perlu persis sama lagi.
+                val chapters = SupabaseApi.fetchChaptersForManga(mangaId)
 
                 val meta = try {
-                    SupabaseApi.fetchAllManga().firstOrNull { it.title.equals(mangaTitle, ignoreCase = true) }
+                    SupabaseApi.fetchAllManga().firstOrNull { it.id == mangaId }
                 } catch (e: Exception) {
                     null
                 }
 
                 val mangaDisplay = MangaDisplay(
+                    id = mangaId,
                     title = mangaTitle,
-                    coverUrl = coverUrl ?: meta?.coverUrlOverride,
+                    coverUrl = meta?.coverUrlOverride,
                     synopsis = meta?.synopsis,
                     genres = meta?.genres ?: emptyList(),
                     statusId = meta?.statusId,

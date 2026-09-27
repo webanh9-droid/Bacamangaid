@@ -20,8 +20,10 @@ object GitHubWriteApi {
     /**
      * Upload (atau replace) file ke repo GitHub di path tertentu (root repo).
      * fileName contoh: "Si Ocong Chapter 5.pdf" atau "Si Ocong Cover.jpg"
+     * Balikin download_url dari file yang barusan di-upload (langsung dari respons GitHub,
+     * bukan dibangun manual) — dipakai buat disimpan sebagai pdf_url/cover_url di Supabase.
      */
-    fun uploadFile(fileName: String, content: ByteArray, commitMessage: String) {
+    fun uploadFile(fileName: String, content: ByteArray, commitMessage: String): String {
         val existingSha = getExistingFileSha(fileName)
 
         val url = URL("https://api.github.com/repos/$OWNER/$REPO/contents/$fileName")
@@ -51,10 +53,15 @@ object GitHubWriteApi {
             val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
             throw Exception("Upload gagal ($responseCode): $errorBody")
         }
+
+        val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
         connection.disconnect()
 
-        // GitHub API listing kadang nge-cache; reset cache lokal biar list ke-refresh
-        GitHubApi.clearCache()
+        val downloadUrl = JSONObject(responseBody).optJSONObject("content")?.optString("download_url")
+        if (downloadUrl.isNullOrEmpty()) {
+            throw Exception("Upload berhasil tapi download_url tidak didapat dari GitHub")
+        }
+        return downloadUrl
     }
 
     /** Cek apakah file dengan nama itu udah ada di repo, kalau ada return sha-nya (perlu buat update/replace). */
