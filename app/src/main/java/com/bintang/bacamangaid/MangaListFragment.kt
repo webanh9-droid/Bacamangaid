@@ -20,6 +20,20 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
 
+    companion object {
+        private const val ARG_CONTENT_TYPE = "content_type"
+
+        fun newInstance(contentType: String): MangaListFragment {
+            val fragment = MangaListFragment()
+            val args = Bundle()
+            args.putString(ARG_CONTENT_TYPE, contentType)
+            fragment.arguments = args
+            return fragment
+        }
+    }
+
+    private val contentType: String get() = arguments?.getString(ARG_CONTENT_TYPE) ?: "manga"
+
     private var fullList: List<MangaDisplay> = emptyList()
     private var selectedGenreId: Long? = null
     private var selectedStatusId: Long? = null
@@ -41,6 +55,7 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
         val errorText = view.findViewById<TextView>(R.id.errorText)
         val swipeRefresh = view.findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
         val searchInput = view.findViewById<EditText>(R.id.searchInput)
+        searchInput.hint = if (contentType == "novel") "🔍  Cari judul novel..." else "🔍  Cari judul manga..."
         val accountButton = view.findViewById<TextView>(R.id.accountButton)
         val adminButton = view.findViewById<TextView>(R.id.adminButton)
         genreChipContainer = view.findViewById(R.id.genreChipContainer)
@@ -99,9 +114,9 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
 
         Thread {
             try {
-                // Daftar manga sekarang datang langsung dari tabel manga di Supabase (sumber utama,
-                // punya id) — bukan hasil scan & parsing nama file PDF dari repo GitHub lagi.
-                val metaList = try { SupabaseApi.fetchAllManga() } catch (e: Exception) { emptyList() }
+                // Daftar manga/novel sekarang datang langsung dari tabel manga di Supabase
+                // (sumber utama, punya id), difilter server-side sesuai tab yang aktif.
+                val metaList = try { SupabaseApi.fetchAllManga(contentType) } catch (e: Exception) { emptyList() }
                 val genres = try { SupabaseApi.fetchGenres() } catch (e: Exception) { emptyList() }
                 val statuses = try { SupabaseApi.fetchStatuses() } catch (e: Exception) { emptyList() }
                 val avgRatings = try { SupabaseApi.fetchAvgRatings() } catch (e: Exception) { emptyMap() }
@@ -146,7 +161,7 @@ class MangaListFragment : Fragment(R.layout.fragment_manga_list) {
                     setupStatusChips(statuses)
 
                     if (combined.isEmpty()) {
-                        errorText.text = "Belum ada manga tersedia."
+                        errorText.text = if (contentType == "novel") "Belum ada novel tersedia." else "Belum ada manga tersedia."
                         errorText.visibility = View.VISIBLE
                     } else {
                         if (recommended.isNotEmpty()) {

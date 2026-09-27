@@ -12,8 +12,7 @@ data class MangaMeta(
     val genres: List<GenreItem> = emptyList(),
     val coverUrlOverride: String?,
     val statusId: Long? = null,
-    val statusName: String? = null,
-    val contentType: String = "manga"
+    val statusName: String? = null
 )
 
 data class GenreItem(val id: Long, val name: String)
@@ -24,13 +23,11 @@ object SupabaseApi {
     private const val SUPABASE_URL = "https://epuyvcwrdrltxbhdegsi.supabase.co"
     private const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwdXl2Y3dyZHJsdHhiaGRlZ3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwODQzNDcsImV4cCI6MjA4NzY2MDM0N30.kOZ381kxAGFkI_rz4L3G9lJ8ioxVIp6ujiD0xrgI7cE"
 
-    fun fetchAllManga(contentType: String? = null): List<MangaMeta> {
+    fun fetchAllManga(): List<MangaMeta> {
         // Pakai Supabase nested select lewat tabel relasi manga_genres.
         // "id" sekarang wajib diambil — ini yang dipakai sebagai kunci utama manga
         // (ganti dari cocokin title string), buat relasi ke tabel chapters.
-        // contentType: "manga" atau "novel" buat filter server-side; null = ambil semua.
-        var url = "$SUPABASE_URL/rest/v1/manga?select=id,title,synopsis,cover_url,status_id,content_type,manga_statuses(name),manga_genres(genre_id,genres(id,name))"
-        if (contentType != null) url += "&content_type=eq.$contentType"
+        val url = "$SUPABASE_URL/rest/v1/manga?select=id,title,synopsis,cover_url,status_id,manga_statuses(name),manga_genres(genre_id,genres(id,name))"
         val response = getRequest(url, null)
         val jsonArray = JSONArray(response)
 
@@ -41,7 +38,6 @@ object SupabaseApi {
             val title = obj.getString("title")
             val synopsis = if (obj.isNull("synopsis")) null else obj.optString("synopsis")
             val coverOverride = if (obj.isNull("cover_url")) null else obj.optString("cover_url")
-            val contentTypeValue = if (obj.isNull("content_type")) "manga" else obj.optString("content_type", "manga")
 
             // Status
             val statusId = if (obj.isNull("status_id")) null else obj.optLong("status_id")
@@ -61,7 +57,7 @@ object SupabaseApi {
                 }
             }
 
-            list.add(MangaMeta(id, title, synopsis, genres, coverOverride, statusId, statusName, contentTypeValue))
+            list.add(MangaMeta(id, title, synopsis, genres, coverOverride, statusId, statusName))
         }
         return list
     }

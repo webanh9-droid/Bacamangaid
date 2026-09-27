@@ -19,13 +19,12 @@ object AdminApi {
     }
 
     /**
-     * Ambil id manga by title kalau sudah ada (exact match); kalau belum, bikin baris baru
-     * (cuma title doang, kolom lain kosong) dan balikin id-nya.
-     * Dipakai sekali doang per manga (baik pas nambah manga baru, atau resolve id manga yang
-     * dipilih dari spinner) — SETELAHNYA semua relasi (chapter, genre, dst) pakai id ini,
+     * Ambil id manga/novel by title kalau sudah ada (exact match); kalau belum, bikin baris baru
+     * dengan content_type sesuai pilihan admin ("manga" atau "novel") dan balikin id-nya.
+     * Dipakai sekali doang per manga — SETELAHNYA semua relasi (chapter, genre, dst) pakai id ini,
      * jadi nggak ada lagi ketergantungan sama title harus persis sama di semua tempat.
      */
-    fun getOrCreateMangaId(accessToken: String, title: String): Long {
+    fun getOrCreateMangaId(accessToken: String, title: String, contentType: String = "manga"): Long {
         val encodedTitle = java.net.URLEncoder.encode(title, "UTF-8")
         val selectUrl = "$SUPABASE_URL/rest/v1/manga?select=id&title=eq.$encodedTitle"
         val existingArr = JSONArray(get(selectUrl, accessToken))
@@ -44,6 +43,7 @@ object AdminApi {
 
         val body = JSONObject()
         body.put("title", title)
+        body.put("content_type", contentType)
         connection.outputStream.use { it.write(body.toString().toByteArray()) }
 
         val responseCode = connection.responseCode

@@ -1,0 +1,99 @@
+package com.bintang.bacamangaid
+
+import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
+class ChapterListFragment : Fragment(R.layout.fragment_chapter_list) {
+
+    companion object {
+        private const val ARG_MANGA_ID = "manga_id"
+        private const val ARG_TITLE = "manga_title"
+
+        fun newInstance(mangaId: Long, title: String): ChapterListFragment {
+            val fragment = ChapterListFragment()
+            val args = Bundle()
+            args.putLong(ARG_MANGA_ID, mangaId)
+            args.putString(ARG_TITLE, title)
+            fragment.arguments = args
+            return fragment
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val mangaId = arguments?.getLong(ARG_MANGA_ID) ?: return
+        val mangaTitle = arguments?.getString(ARG_TITLE) ?: return
+
+        val recyclerView = view.findViewById<RecyclerView>(R.id.chapterRecyclerView)
+        val loading = view.findViewById<ProgressBar>(R.id.chapterLoading)
+        val errorText = view.findViewById<TextView>(R.id.chapterError)
+
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        loading.visibility = View.VISIBLE
+
+        Thread {
+            try {
+                // Chapter & metadata sekarang diambil by manga_id dari Supabase, bukan
+                // cocokin nama file GitHub — jadi judul manga nggak perlu persis sama lagi.
+                val chapters = SupabaseApi.fetchChaptersForManga(mangaId)
+
+                val meta = try {
+                    SupabaseApi.fetchAllManga().firstOrNull { it.id == mangaId }
+                } catch (e: Exception) {
+                    null
+                }
+
+                val mangaDisplay = MangaDisplay(
+                    id = mangaId,
+                    title = mangaTitle,
+                    coverUrl = meta?.coverUrlOverride,
+                    synopsis = meta?.synopsis,
+                    genres = meta?.genres ?: emptyList(),
+                    statusId = meta?.statusId,
+                    statusName = meta?.statusName
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    loading.visibility = View.GONE
+                    if (chapters.isEmpty()) {
+                        errorText.text = "Belum ada chapter di manga ini."
+                        errorText.visibility = View.VISIBLE
+                    } else {
+                        recyclerView.adapter = ChapterListAdapter(mangaDisplay, chapters) { chapterNum, pdfUrl ->
+                            val intent = Intent(requireContext(), ReaderActivity::class.java)
+                            intent.putExtra(ReaderActivity.EXTRA_PDF_URL, pdfUrl)
+                            intent.putExtra(ReaderActivity.EXTRA_TITLE, "$mangaTitle - Chapter $chapterNum")
+                            intent.putExtra(ReaderActivity.EXTRA_MANGA_TITLE, mangaTitle)
+                            intent.putExtra(ReaderActivity.EXTRA_CHAPTER_NUM, chapterNum)
+                            // Pass semua chapter berurutan buat fitur auto-lanjut chapter
+                            intent.putStringArrayListExtra(
+                                ReaderActivity.EXTRA_ALL_PDF_URLS,
+                                ArrayList(chapters.map { it.second })
+                            )
+                            intent.putIntegerArrayListExtra(
+                                ReaderActivity.EXTRA_ALL_CHAPTER_NUMS,
+                                ArrayList(chapters.map { it.first })
+                            )
+                            startActivity(intent)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    loading.visibility = View.GONE
+                    errorText.text = "Gagal memuat chapter. Cek koneksi internet."
+                    errorText.visibility = View.VISIBLE
+                }
+            }
+        }.start()
+    }
+}

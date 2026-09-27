@@ -9,7 +9,8 @@ data class MangaDisplay(
     val statusId: Long? = null,
     val statusName: String? = null,
     val avgRating: Float = 0f,
-    val totalViews: Int = 0
+    val totalViews: Int = 0,
+    val contentType: String = "manga"
 ) {
     fun hasGenre(genreId: Long) = genres.any { it.id == genreId }
     val primaryGenreId: Long? get() = genres.firstOrNull()?.id

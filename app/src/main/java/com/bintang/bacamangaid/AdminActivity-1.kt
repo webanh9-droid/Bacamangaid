@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -19,7 +18,6 @@ class AdminActivity : AppCompatActivity() {
     private var mangaOptions: List<MangaMeta> = emptyList()
     private var genres: List<GenreItem> = emptyList()
     private var statuses: List<StatusItem> = emptyList()
-    private var activeContentType: String = "manga"
 
     private var selectedPdfUri: Uri? = null
     private var selectedCoverUri: Uri? = null
@@ -105,7 +103,7 @@ class AdminActivity : AppCompatActivity() {
     private fun resolveActiveManga(token: String, newTitleInput: EditText, mangaSpinner: Spinner): Pair<Long, String>? {
         val newTitle = newTitleInput.text.toString().trim()
         if (newTitle.isNotEmpty()) {
-            val id = AdminApi.getOrCreateMangaId(token, newTitle, activeContentType)
+            val id = AdminApi.getOrCreateMangaId(token, newTitle)
             return Pair(id, newTitle)
         }
         if (mangaOptions.isEmpty()) return null
@@ -138,9 +136,6 @@ class AdminActivity : AppCompatActivity() {
     }
 
     private fun setupAdminUi() {
-        val contentTypeGroup = findViewById<RadioGroup>(R.id.contentTypeGroup)
-        val pickMangaLabel = findViewById<TextView>(R.id.pickMangaLabel)
-        val newMangaLabel = findViewById<TextView>(R.id.newMangaLabel)
         val mangaSpinner = findViewById<Spinner>(R.id.mangaSpinner)
         val newTitleInput = findViewById<EditText>(R.id.newMangaTitleInput)
         val genreCheckboxContainer = findViewById<LinearLayout>(R.id.genreCheckboxContainer)
@@ -149,45 +144,11 @@ class AdminActivity : AppCompatActivity() {
         val chapterNumberInput = findViewById<EditText>(R.id.chapterNumberInput)
         val newAdminEmailInput = findViewById<EditText>(R.id.newAdminEmailInput)
 
-        fun updateLabelsForType() {
-            val label = if (activeContentType == "novel") "Novel" else "Manga"
-            pickMangaLabel.text = "Pilih $label"
-            newMangaLabel.text = "Atau buat $label baru:"
-            newTitleInput.hint = "Judul $label baru (kosongkan kalau pilih dari atas)"
-        }
-        updateLabelsForType()
-
-        fun reloadMangaOptionsForType() {
-            Thread {
-                val options = try {
-                    SupabaseApi.fetchAllManga(activeContentType).sortedBy { it.title.lowercase() }
-                } catch (e: Exception) { emptyList() }
-                runOnUiThread {
-                    mangaOptions = options
-                    mangaSpinner.adapter = ArrayAdapter(
-                        this, android.R.layout.simple_spinner_dropdown_item, mangaOptions.map { it.title }
-                    )
-                    if (mangaOptions.isNotEmpty() && newTitleInput.text.toString().isBlank()) {
-                        suggestNextChapterNumber(mangaOptions[0].id, chapterNumberInput)
-                    } else if (mangaOptions.isEmpty()) {
-                        chapterNumberInput.setText("1")
-                    }
-                }
-            }.start()
-        }
-
-        contentTypeGroup.setOnCheckedChangeListener { _, checkedId ->
-            activeContentType = if (checkedId == R.id.rbTypeNovel) "novel" else "manga"
-            updateLabelsForType()
-            newTitleInput.setText("")
-            reloadMangaOptionsForType()
-        }
-
         Thread {
             try {
                 // Daftar manga buat spinner sekarang datang dari tabel manga di Supabase (punya id),
-                // difilter sesuai tipe konten aktif (manga/novel) — bukan hasil scan nama file PDF lagi.
-                mangaOptions = try { SupabaseApi.fetchAllManga(activeContentType).sortedBy { it.title.lowercase() } } catch (e: Exception) { emptyList() }
+                // bukan hasil scan nama file PDF di repo GitHub lagi.
+                mangaOptions = try { SupabaseApi.fetchAllManga().sortedBy { it.title.lowercase() } } catch (e: Exception) { emptyList() }
                 genres = try { SupabaseApi.fetchGenres() } catch (e: Exception) { emptyList() }
                 statuses = try { SupabaseApi.fetchStatuses() } catch (e: Exception) { emptyList() }
 
@@ -204,10 +165,9 @@ class AdminActivity : AppCompatActivity() {
                     )
 
                     if (mangaOptions.isEmpty()) {
-                        val label = if (activeContentType == "novel") "novel" else "manga"
                         Toast.makeText(
                             this,
-                            "Belum ada $label. Isi 'judul $label baru' di bawah buat mulai upload chapter pertama.",
+                            "Belum ada manga. Isi 'judul manga baru' di bawah buat mulai upload chapter pertama.",
                             Toast.LENGTH_LONG
                         ).show()
                         chapterNumberInput.setText("1")
@@ -217,7 +177,7 @@ class AdminActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this, "Gagal memuat daftar manga/novel/genre: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Gagal memuat daftar manga/genre: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()

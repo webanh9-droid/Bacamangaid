@@ -48,6 +48,7 @@ class ReaderActivity : AppCompatActivity() {
         val recyclerView      = findViewById<RecyclerView>(R.id.pageRecyclerView)
         val loadingContainer  = findViewById<View>(R.id.loadingContainer)
         val loadingStatusText = findViewById<TextView>(R.id.loadingStatusText)
+        val pageCounterText   = findViewById<TextView>(R.id.pageCounterText)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         if (pdfUrl == null) {
@@ -56,16 +57,18 @@ class ReaderActivity : AppCompatActivity() {
             return
         }
 
-        loadChapter(pdfUrl, recyclerView, loadingContainer, loadingStatusText)
+        loadChapter(pdfUrl, recyclerView, loadingContainer, loadingStatusText, pageCounterText)
     }
 
     private fun loadChapter(
         pdfUrl: String,
         recyclerView: RecyclerView,
         loadingContainer: View,
-        loadingStatusText: TextView
+        loadingStatusText: TextView,
+        pageCounterText: TextView
     ) {
         loadingContainer.visibility = View.VISIBLE
+        pageCounterText.visibility = View.GONE
         title = "$mangaTitle - Chapter $currentChapterNum"
 
         Thread {
@@ -105,9 +108,32 @@ class ReaderActivity : AppCompatActivity() {
                     catch (e: Exception) { 0 }
                 } else 0
 
+                // Catat "pembaca" di sini — SETELAH chapter beneran berhasil di-render, bukan pas
+                // tombol chapter di-tap. Kalau dicatat pas tap doang, orang yang buka lalu langsung
+                // keluar (belum sempat baca apa-apa) tetap ke-hitung; sekarang baru ke-hitung kalau
+                // halamannya beneran sukses tampil.
+                if (token != null && userId != null) {
+                    Thread {
+                        try { SupabaseApi.recordRead(token, userId, mangaTitle) }
+                        catch (e: Exception) { }
+                    }.start()
+                }
+
                 Handler(Looper.getMainLooper()).post {
                     loadingContainer.visibility = View.GONE
                     (recyclerView.layoutManager as LinearLayoutManager).scrollToPosition(0)
+
+                    pageCounterText.text = "1 / ${pages.size}"
+                    pageCounterText.visibility = View.VISIBLE
+                    recyclerView.clearOnScrollListeners()
+                    recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                            val layoutManager = rv.layoutManager as? LinearLayoutManager ?: return
+                            val firstVisible = layoutManager.findFirstVisibleItemPosition()
+                            val current = (firstVisible + 1).coerceIn(1, pages.size)
+                            pageCounterText.text = "$current / ${pages.size}"
+                        }
+                    })
 
                     recyclerView.adapter = PageAdapter(
                         pages         = pages,
@@ -149,6 +175,6 @@ class ReaderActivity : AppCompatActivity() {
         if (index < 0) return
         currentChapterNum = targetNum
         val url = allPdfUrls[index]
-        loadChapter(url, recyclerView, loadingContainer, loadingStatusText)
+        loadChapter(url, recyclerView, loadingContainer, loadingStatusText, findViewById(R.id.pageCounterText))
     }
 }
